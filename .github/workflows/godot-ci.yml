@@ -27,8 +27,33 @@ jobs:
           cd $PROJECT_PATH
           godot --headless --verbose --export-release "Linux/X11" build/linux/$EXPORT_NAME.x86_64
       - name: Upload Artifact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: linux
           path: build/linux
+
+  export-linux-headless:
+    name: Linux Export (Headless Server)
+    runs-on: ubuntu-20.04
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Setup
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+      - name: Linux Headless Build
+        run: |
+          mkdir -v -p build/linux-headless
+          cd $PROJECT_PATH
+          godot --headless --verbose --export-release "Linux/X11 Headless Server" build/linux-headless/$EXPORT_NAME-server-headless.x86_64
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: build/linux-headless
 
