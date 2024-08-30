@@ -1,5 +1,8 @@
 name: "godot-ci export"
-on: push
+on:
+  push:
+    branches:
+    - master
 
 env:
   GODOT_VERSION: 4.3
@@ -7,11 +10,46 @@ env:
   PROJECT_PATH: "."
 
 jobs:
-  export-linux:
-    name: Linux Export
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions: write-all
+    outputs:
+      timestamp: ${{ steps.get-timestamp.outputs.time }}
+    steps:
+      - name: Get build timestamp
+        id: get-timestamp
+        run: |
+          echo "time=$(/bin/date -u "+%Y-%m-%d-%H%M")" >> $GITHUB_OUTPUT
+      - name: Generate environmental variables
+        id: generate_env_vars
+        run: echo "release_name=Source of Mana experimental build ${{ steps.get-timestamp.outputs.time }}" >> $GITHUB_OUTPUT
+  builds:
+    needs: release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - name: Linux
+          artifact: linux
+          export_template: "Linux/X11"
+          ext: "x86_64"
+        - name: Linux (Headless Server)
+          artifact: linux-server-headless
+          export_template: "Linux/X11 Headless Server"
+        - name: Windows
+          artifact: windows
+          export_template: "Windows Desktop"
+          ext: "exe"
+        - name: macOS
+          artifact: macos
+          export_template: "macOS"
+          ext: "zip"
     runs-on: ubuntu-20.04
+    permissions: write-all
     container:
       image: barichello/godot-ci:4.3
+    name: "Export: {{ matrix.name }}"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,113 +59,11 @@ jobs:
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
           mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-      - name: Linux Build
+      - name: {{ matrix.name }} Build
         run: |
-          mkdir -v -p build/linux
+          mkdir -v -p "build/{{ matrix.artifact }}"
           cd $PROJECT_PATH
-          godot --headless --verbose --export-release "Linux/X11" "build/linux/$EXPORT_NAME.x86_64"
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux
-          path: build/linux
+          godot --headless --verbose --export-release "{{ matrix.export_template }}" "build/{{ matrix.artifact }}/$EXPORT_NAME-{{ matrix.artifact }}.${{ matrix.ext }}"
+      - run: |
+          gh release upload sourceofmana-experimental-${{ needs.release.outputs.timestamp }} "builds/{{ matrix.artifact }}/$EXPORT_NAME-{{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.${{ matrix.ext }}"
 
-  export-linux-headless:
-    name: Linux Export (Headless Server)
-    runs-on: ubuntu-20.04
-    container:
-      image: barichello/godot-ci:4.3
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-      - name: Setup
-        run: |
-          mkdir -v -p ~/.local/share/godot/export_templates/
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-      - name: Linux Headless Build
-        run: |
-          mkdir -v -p build/linux-headless
-          cd $PROJECT_PATH
-          godot --headless --verbose --export-release "Linux/X11 Headless Server" "build/linux-headless/$EXPORT_NAME-server-headless.x86_64"
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-headless
-          path: build/linux-headless
-
-  export-windows:
-    name: Windows Export
-    runs-on: ubuntu-20.04
-    container:
-      image: barichello/godot-ci:4.3
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-      - name: Setup
-        run: |
-          mkdir -v -p ~/.local/share/godot/export_templates/
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-      - name: Windows Build
-        run: |
-          mkdir -v -p build/windows
-          cd $PROJECT_PATH
-          godot --headless --verbose --export-release "Windows Desktop" "build/windows/$EXPORT_NAME.exe"
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows
-          path: build/windows
-
-  export-mac:
-    name: Mac Export
-    runs-on: ubuntu-20.04
-    container:
-      image: barichello/godot-ci:4.3
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-      - name: Setup
-        run: |
-          mkdir -v -p ~/.local/share/godot/export_templates/
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-      - name: Mac Build
-        run: |
-          mkdir -v -p build/mac
-          cd $PROJECT_PATH
-          godot --headless --verbose --export-release "macOS" "build/mac/$EXPORT_NAME.zip"
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: mac
-          path: build/mac
-
-  export-android:
-    name: Android Export
-    runs-on: ubuntu-20.04
-    container:
-      image: barichello/godot-ci:4.3
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-      - name: Setup
-        run: |
-          mkdir -v -p ~/.local/share/godot/export_templates/
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-      - name: Android Build
-        run: |
-          mkdir -v -p build/android
-          cd $PROJECT_PATH
-          godot --headless --verbose --export-release "Android" "build/android/$EXPORT_NAME.apk"
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: android
-          path: build/android
