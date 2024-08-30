@@ -49,7 +49,7 @@ jobs:
     permissions: write-all
     container:
       image: barichello/godot-ci:4.3
-    name: Export {{ matrix.name }}
+    name: Export ${{ matrix.name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -59,11 +59,11 @@ jobs:
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
           mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-      - name: {{ matrix.name }}
+      - name: ${{ matrix.name }} Build
         run: |
           mkdir -v -p "build/{{ matrix.artifact }}"
           cd "$PROJECT_PATH"
-          godot --headless --verbose --export-release "{{ matrix.export_template }}" "build/{{ matrix.artifact }}/${EXPORT_NAME}-{{ matrix.artifact }}.${{ matrix.ext }}"
+          godot --headless --verbose --export-release "${{ matrix.export_template }}" "build/${{ matrix.artifact }}/${EXPORT_NAME}-${{ matrix.artifact }}.${{ matrix.ext }}"
       - run: |
-          gh release upload sourceofmana-experimental-${{ needs.release.outputs.timestamp }} "builds/{{ matrix.artifact }}/${EXPORT_NAME}-{{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.${{ matrix.ext }}"
+          gh release upload sourceofmana-experimental-${{ needs.release.outputs.timestamp }} "builds/${{ matrix.artifact }}/${EXPORT_NAME}-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.${{ matrix.ext }}"
 
