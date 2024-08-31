@@ -8,6 +8,9 @@ env:
   GODOT_VERSION: 4.3
   EXPORT_NAME: "Source of Mana"
   PROJECT_PATH: "."
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  REPOSITORY_NAME: ${{ github.event.repository.name }}
+
 
 jobs:
   release:
