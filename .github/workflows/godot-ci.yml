@@ -76,4 +76,3 @@ jobs:
         run: gh release upload sourceofmana-experimental-${{ needs.release.outputs.timestamp }} "build/${{ matrix.artifact }}/${EXPORT_NAME}-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.${{ matrix.ext }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
