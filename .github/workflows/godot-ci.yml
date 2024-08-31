@@ -27,6 +27,10 @@ jobs:
       - name: Generate environmental variables
         id: generate_env_vars
         run: echo "release_name=Source of Mana experimental build ${{ steps.get-timestamp.outputs.time }}" >> $GITHUB_OUTPUT
+      - run: gh release create ${{ steps.generate_env_vars.outputs.tag_name }} --prerelease --title "${{ steps.generate_env_vars.outputs.release_name }}" --target "$(git log -1 --format='%H')"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   builds:
     needs: release
     strategy:
@@ -67,6 +71,7 @@ jobs:
           mkdir -v -p "build/${{ matrix.artifact }}"
           cd "$PROJECT_PATH"
           godot --headless --verbose --export-release "${{ matrix.export_template }}" "build/${{ matrix.artifact }}/${EXPORT_NAME}-${{ matrix.artifact }}.${{ matrix.ext }}"
-      - run: |
-          gh release upload sourceofmana-experimental-${{ needs.release.outputs.timestamp }} "build/${{ matrix.artifact }}/${EXPORT_NAME}-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.${{ matrix.ext }}"
+      - run: gh release upload sourceofmana-experimental-${{ needs.release.outputs.timestamp }} "build/${{ matrix.artifact }}/${EXPORT_NAME}-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.${{ matrix.ext }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
