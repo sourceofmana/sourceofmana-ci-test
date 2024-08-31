@@ -74,7 +74,6 @@ jobs:
           godot --headless --verbose --export-release "${{ matrix.export_template }}" "build/${{ matrix.artifact }}/${EXPORT_NAME}-${{ matrix.artifact }}.${{ matrix.ext }}"
       - name: Upload artifact to release
         run: gh release upload sourceofmana-experimental-${{ needs.release.outputs.timestamp }} "build/${{ matrix.artifact }}/${EXPORT_NAME}-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.${{ matrix.ext }}"
-        uses: actions/checkout@v4
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
