@@ -45,6 +45,7 @@ jobs:
         - name: Linux (Headless Server)
           artifact: linux-server-headless
           export_template: "Linux/X11 Headless Server"
+          ext: "x86_64"
         - name: Windows
           artifact: windows
           export_template: "Windows Desktop"
