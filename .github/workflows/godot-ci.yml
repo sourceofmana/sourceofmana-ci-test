@@ -77,6 +77,8 @@ jobs:
           wget https://github.com/cli/cli/releases/download/v2.55.0/gh_2.55.0_linux_amd64.deb
           dpkg -i gh_2.55.0_linux_amd64.deb
       - name: Upload artifact to release
-        run: gh release upload sourceofmana-experimental-${{ needs.release.outputs.timestamp }} "build/${{ matrix.artifact }}/${EXPORT_NAME}-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.${{ matrix.ext }}"
+        run: |
+          git config --global --add safe.directory '*'
+          gh release upload sourceofmana-experimental-${{ needs.release.outputs.timestamp }} "build/${{ matrix.artifact }}/${EXPORT_NAME}-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.${{ matrix.ext }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
