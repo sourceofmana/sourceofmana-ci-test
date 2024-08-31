@@ -8,8 +8,6 @@ env:
   GODOT_VERSION: 4.3
   EXPORT_NAME: "Source of Mana"
   PROJECT_PATH: "."
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  REPOSITORY_NAME: ${{ github.event.repository.name }}
 
 
 jobs:
@@ -23,7 +21,9 @@ jobs:
       - name: Get build timestamp
         id: get-timestamp
         run: |
+          echo "tag_name=som-experimental-${{ steps.get-timestamp.outputs.time }}" >> $GITHUB_OUTPUT
           echo "time=$(/bin/date -u "+%Y-%m-%d-%H%M")" >> $GITHUB_OUTPUT
+      - uses: actions/checkout@v4
       - name: Generate environmental variables
         id: generate_env_vars
         run: echo "release_name=Source of Mana experimental build ${{ steps.get-timestamp.outputs.time }}" >> $GITHUB_OUTPUT
