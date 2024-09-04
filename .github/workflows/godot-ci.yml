@@ -78,6 +78,7 @@ jobs:
           cat ~/.config/godot/editor_settings-4.tres
           ls /usr/lib/jvm/java-17-openjdk-amd64
           ls /usr/lib/jvm
+          ls /root/debug.keystore
           mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
       - name: ${{ matrix.name }} Build
         run: |
