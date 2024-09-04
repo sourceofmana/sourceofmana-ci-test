@@ -72,14 +72,15 @@ jobs:
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
           mkdir -v -p ~/.config/
-          mv /root/.config/godot ~/.config/godot
+          cp -r /root/.config/godot ~/.config/godot
           echo 'export/android/java_sdk_path = "/usr/lib/jvm/java-17-openjdk-amd64"' >> ~/.config/godot/editor_settings-4.tres
           cp ~/.config/godot/editor_settings-4.tres ~/.config/godot/editor_settings-4.3.tres
           cat ~/.config/godot/editor_settings-4.3.tres
           ls /usr/lib/jvm/java-17-openjdk-amd64
           ls /usr/lib/jvm
+          echo "XDG_DATA_CONFIG: $XDG_DATA_CONFIG, XDG_DATA_HOME: $XDG_DATA_HOME"
           ls /root/debug.keystore
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
       - name: ${{ matrix.name }} Build
         run: |
           mkdir -v -p "build/${{ matrix.artifact }}"
