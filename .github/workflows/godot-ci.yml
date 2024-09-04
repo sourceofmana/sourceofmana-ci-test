@@ -54,6 +54,10 @@ jobs:
           artifact: macos
           export_template: "macOS"
           ext: "zip"
+        - name: Android
+          artifact: android
+          export_template: "Android"
+          ext: "apk"
     runs-on: ubuntu-latest
     permissions: write-all
     container:
@@ -68,6 +72,7 @@ jobs:
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
           mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          echo 'export/android/java_sdk_path = "/usr/lib/jvm/java-17-openjdk"' >> ~/.config/godot/editor_settings-4.tres
       - name: ${{ matrix.name }} Build
         run: |
           mkdir -v -p "build/${{ matrix.artifact }}"
