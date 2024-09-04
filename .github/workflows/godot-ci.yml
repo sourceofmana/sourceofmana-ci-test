@@ -72,9 +72,9 @@ jobs:
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
           mkdir -v -p ~/.config/
+          echo 'export/android/java_sdk_path = "/usr/lib/jvm/java-17-openjdk-amd64"' >> /root/.config/godot/editor_settings-4.tres
+          cp /root/.config/godot/editor_settings-4.tres /root/.config/godot/editor_settings-4.3.tres
           cp -r /root/.config/godot ~/.config/godot
-          echo 'export/android/java_sdk_path = "/usr/lib/jvm/java-17-openjdk-amd64"' >> ~/.config/godot/editor_settings-4.tres
-          cp ~/.config/godot/editor_settings-4.tres ~/.config/godot/editor_settings-4.3.tres
           cat ~/.config/godot/editor_settings-4.3.tres
           ls /usr/lib/jvm/java-17-openjdk-amd64
           ls /usr/lib/jvm
