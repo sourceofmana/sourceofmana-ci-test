@@ -74,6 +74,7 @@ jobs:
           mkdir -v -p ~/.config/
           mv /root/.config/godot ~/.config/godot
           echo 'export/android/java_sdk_path = "/usr/lib/jvm/java-17-openjdk-amd64"' >> ~/.config/godot/editor_settings-4.tres
+          echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> $GITHUB_ENV
           cat ~/.config/godot/editor_settings-4.tres
           ls /usr/lib/jvm/java-17-openjdk-amd64
           ls /usr/lib/jvm
