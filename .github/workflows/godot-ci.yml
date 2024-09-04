@@ -78,6 +78,7 @@ jobs:
           cat ~/.config/godot/editor_settings-4.3.tres
           ls /usr/lib/jvm/java-17-openjdk-amd64
           ls /usr/lib/jvm
+          echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> $GITHUB_ENV
           echo "XDG_DATA_CONFIG: $XDG_DATA_CONFIG, XDG_DATA_HOME: $XDG_DATA_HOME"
           ls /root/debug.keystore
           cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
@@ -85,7 +86,7 @@ jobs:
         run: |
           mkdir -v -p "build/${{ matrix.artifact }}"
           cd "$PROJECT_PATH"
-          godot --headless --verbose --export-release "${{ matrix.export_template }}" "build/${{ matrix.artifact }}/${EXPORT_NAME}-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.${{ matrix.ext }}"
+          godot --headless --verbose --export-debug "${{ matrix.export_template }}" "build/${{ matrix.artifact }}/${EXPORT_NAME}-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.${{ matrix.ext }}"
       - name: Ensure github cli is present
         run: |
           wget https://github.com/cli/cli/releases/download/v2.55.0/gh_2.55.0_linux_amd64.deb
