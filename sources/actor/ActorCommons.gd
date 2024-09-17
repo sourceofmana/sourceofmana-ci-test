@@ -103,6 +103,9 @@ static func IsAttacking(agent : Actor) -> bool:
 static func IsSitting(agent : Actor) -> bool:
 	return agent and agent.state == State.SIT
 
+static func IsTriggering(agent : Actor) -> bool:
+	return agent and agent.state == State.TRIGGER
+
 #
 const slotBody : String						= "Body"
 const slotChest : String					= "Chest"
@@ -187,9 +190,26 @@ const RegenDelay : float					= 1.0
 const DeathDelay : float					= 10.0
 const DisplayHPDelay : float				= 7.0
 
+# Drop
+const DropDelay : float						= 15.0
+const PickupSquaredDistance : float			= 48 * 48 # 1.5 Tile squared length
+
 # Stats
 const MaxPointPerAttributes : int			= 20
 const InventorySize : int					= 100
 
 # Explore
 static var SailingDestination : Destination	= Destination.new("Ocean", Vector2(71 * 32, 55 * 32))
+
+# Navigation
+const DisplacementVector : Vector2			= Vector2(32, 32)
+const MaxDisplacementSquareLength : float	= 64 * 64
+
+# New player
+const DefaultAttributes : Dictionary = {
+	"strength": 10,
+	"vitality": 3
+}
+static var DefaultInventory : Dictionary = {
+	"Apple".hash(): 5
+}

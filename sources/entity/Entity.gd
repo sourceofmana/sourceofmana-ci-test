@@ -22,11 +22,10 @@ func SetData(data : EntityData):
 	interactive.Init(data)
 
 func SetVisual(data : EntityData, morphed : bool = false):
-	var visualInitCallback : Callable = visual.Init.bind(data)
 	if morphed:
-		interactive.DisplayMorph(visualInitCallback)
+		interactive.DisplayMorph(visual.Init, [data])
 	else:
-		visualInitCallback.call()
+		visual.Init(data)
 
 #
 func Update(nextVelocity : Vector2, gardbandPosition : Vector2, nextOrientation : Vector2, nextState : ActorCommons.State, nextskillCastID : int, forceValue : bool = false):
@@ -64,12 +63,14 @@ func ClearTarget():
 	if target != null:
 		if target.interactive.nameLabel.material:
 			target.interactive.nameLabel.material = null
-		Callback.SelfDestructTimer(target.interactive.healthBar, ActorCommons.DisplayHPDelay, target.interactive.HideHP, "HideHP")
+		Callback.SelfDestructTimer(target.interactive.healthBar, ActorCommons.DisplayHPDelay, target.interactive.HideHP, [], "HideHP")
 		target = null
 
-func Target(source : Vector2, interactable : bool = true):
-	ClearTarget()
-	target = Entities.GetNearestTarget(source, interactable)
+func Target(source : Vector2, interactable : bool = true, nextTarget : bool = false):
+	var newTarget = Entities.GetNextTarget(source, target if nextTarget and target else null, interactable)
+	if newTarget != target:
+		ClearTarget()
+		target = newTarget
 
 	if target:
 		if interactable and target.type == ActorCommons.Type.NPC:
@@ -92,7 +93,7 @@ func Interact():
 		if target.type == ActorCommons.Type.NPC:
 			Launcher.Network.TriggerInteract(target.agentID)
 		elif target.type == ActorCommons.Type.MONSTER:
-			Cast(SkillCommons.SkillDefaultAttack)
+			Cast(DB.GetCellHash(SkillCommons.SkillMeleeName))
 
 func Cast(skillID : int):
 	var skill : SkillCell = DB.SkillsDB[skillID]
@@ -102,7 +103,7 @@ func Cast(skillID : int):
 
 	var entityID : int = 0
 	if skill.mode == Skill.TargetMode.SINGLE:
-		if not target or target.state == ActorCommons.State.DEATH:
+		if not target or target.state == ActorCommons.State.DEATH or target.type != ActorCommons.Type.MONSTER:
 			Target(position, false)
 		if target and target.type == ActorCommons.Type.MONSTER:
 			entityID = target.agentID

@@ -4,7 +4,7 @@
 		"Ethnicity": "Player",
 		"Gender": "Male",
 		"Hairstyle": "Bald",
-		"NavigationAgent": "PlayerAgent",
+		"Behaviour": ["None"],
 		"Collision": "Medium",
 		"Radius": "10",
 		"DisplayName": true,
@@ -13,17 +13,17 @@
 			"Spirit": "Piou",
 		},
 		"SkillSet": {
-			"0": 1.0,
-			"1": 1.0,
-			"2": 1.0,
-			"3": 1.0,
-			"4": 1.0,
+			"Melee": 1.0,
+			"Mana Burst": 1.0,
+			"Flar": 1.0,
+			"Lum": 1.0,
+			"Inma": 1.0,
 		},
 	},
 	"1": {
 		"Name": "Ship",
 		"Ethnicity": "Ship",
-		"NavigationAgent": "NPAgent",
+		"Behaviour": ["None"],
 		"Collision": "Medium",
 		"Radius": "10",
 		"Stat": {
@@ -36,7 +36,7 @@
 	"1000": {
 		"Name": "Splatyna",
 		"Ethnicity": "Splatyna",
-		"NavigationAgent": "NPAgent",
+		"Behaviour": ["Aggressive", "Leader", "Spawner"],
 		"Collision": "Large",
 		"Radius": "32",
 		"DisplayName": true,
@@ -51,11 +51,14 @@
 		{
 			"Body": "sprites/monsters/dorian.png",
 		},
-		"NavigationAgent": "NPAgent",
+		"Behaviour": ["Aggressive", "Leader", "Steal"],
 		"Collision": "Medium",
 		"Radius": "10",
 		"Stat": {
 			"walkSpeed": 40,
+		},
+		"Drops": {
+			"Dorian's Key": 1.0,
 		},
 	},
 	"1002": {
@@ -65,7 +68,7 @@
 		{
 			"Body": "sprites/monsters/emil.png",
 		},
-		"NavigationAgent": "NPAgent",
+		"Behaviour": ["Neutral", "Follower", "Steal"],
 		"Collision": "Medium",
 		"Radius": "10",
 		"Stat": {
@@ -79,11 +82,14 @@
 		{
 			"Body": "sprites/monsters/gabriel.png",
 		},
-		"NavigationAgent": "NPAgent",
+		"Behaviour": ["Aggressive", "Leader", "Steal"],
 		"Collision": "Medium",
 		"Radius": "10",
 		"Stat": {
 			"walkSpeed": 40,
+		},
+		"Drops": {
+			"Gabriel's Key": 1.0,
 		},
 	},
 	"1004": {
@@ -93,7 +99,7 @@
 		{
 			"Body": "sprites/monsters/lilah.png",
 		},
-		"NavigationAgent": "NPAgent",
+		"Behaviour": ["Neutral", "Follower", "Steal"],
 		"Collision": "Medium",
 		"Radius": "10",
 		"Stat": {
@@ -107,7 +113,7 @@
 		{
 			"Body": "sprites/monsters/lulea.png",
 		},
-		"NavigationAgent": "NPAgent",
+		"Behaviour": ["Neutral", "Follower", "Steal"],
 		"Collision": "Medium",
 		"Radius": "10",
 		"Stat": {
@@ -121,11 +127,14 @@
 		{
 			"Body": "sprites/monsters/marvin.png",
 		},
-		"NavigationAgent": "NPAgent",
+		"Behaviour": ["Aggressive", "Leader", "Steal"],
 		"Collision": "Medium",
 		"Radius": "10",
 		"Stat": {
 			"walkSpeed": 40,
+		},
+		"Drops": {
+			"Marvin's Key": 1.0,
 		},
 	},
 	"1007": {
@@ -135,17 +144,19 @@
 		{
 			"Body": "sprites/monsters/slime-salt.png",
 		},
-		"NavigationAgent": "NPAgent",
+		"Behaviour": ["Neutral", "Steal"],
 		"Collision": "Medium",
 		"Radius": "10",
 		"Stat": {
 			"walkSpeed": 40,
 		},
+		"Drops": {
+			"Apple": 0.7,
+		},
 	},
 	"1008": {
 		"Name": "Piou",
 		"Ethnicity": "Piou",
-		"NavigationAgent": "NPAgent",
 		"Collision": "Medium",
 		"Radius": "10",
 		"Stat": {
@@ -159,7 +170,7 @@
 		{
 			"Body": "sprites/monsters/slime-drain.png",
 		},
-		"NavigationAgent": "NPAgent",
+		"Behaviour": ["Neutral", "Steal"],
 		"Collision": "Medium",
 		"Radius": "10",
 		"Stat": {
@@ -173,7 +184,7 @@
 		{
 			"Body": "sprites/monsters/skull-fire.png",
 		},
-		"NavigationAgent": "NPAgent",
+		"Behaviour": ["Aggressive"],
 		"Collision": "Medium",
 		"Radius": "10",
 		"Stat": {
@@ -181,7 +192,7 @@
 			"Level": 10,
 		},
 		"SkillSet": {
-			"2": 1.0,
+			"Flar": 1.0,
 		},
 	},
 	"1011": {
@@ -191,7 +202,7 @@
 		{
 			"Body": "sprites/monsters/slime-sludge.png",
 		},
-		"NavigationAgent": "NPAgent",
+		"Behaviour": ["Neutral", "Steal"],
 		"Collision": "Medium",
 		"Radius": "10",
 		"Stat": {
@@ -201,7 +212,7 @@
 	"1012": {
 		"Name": "Ratto",
 		"Ethnicity": "Ratto",
-		"NavigationAgent": "NPAgent",
+		"Behaviour": ["Neutral", "Steal"],
 		"Collision": "Medium",
 		"Radius": "10",
 		"Stat": {
@@ -211,7 +222,6 @@
 	"1013": {
 		"Name": "Turtle",
 		"Ethnicity": "Turtle",
-		"NavigationAgent": "NPAgent",
 		"Collision": "Medium",
 		"Radius": "10",
 		"Stat": {
@@ -223,7 +233,6 @@
 	"1014": {
 		"Name": "Croc",
 		"Ethnicity": "Croc",
-		"NavigationAgent": "NPAgent",
 		"Collision": "Medium",
 		"Radius": "12",
 		"Stat": {
@@ -235,7 +244,6 @@
 	"1015": {
 		"Name": "Bat",
 		"Ethnicity": "Bat",
-		"NavigationAgent": "NPAgent",
 		"Collision": "Medium",
 		"Radius": "10",
 		"Stat": {
@@ -254,7 +262,7 @@
 			"Body": "presets/palettes/human-skin-dark.tres",
 		},
 		"Hairstyle": "Bald",
-		"NavigationAgent": "NPAgent",
+		"Behaviour": ["Pacifist"],
 		"Collision": "Small",
 		"Radius": "16",
 		"DisplayName": true,
@@ -265,6 +273,7 @@
 	"2001": {
 		"Name": "Old Chest",
 		"Ethnicity": "Chest",
+		"Behaviour": ["Immobile", "Pacifist"],
 		"Collision": "Large",
 		"Radius": "32",
 		"DisplayName": true,
@@ -281,12 +290,20 @@
 			"Body": "presets/palettes/human-skin-tanned.tres",
 		},
 		"Hairstyle": "Bald",
-		"NavigationAgent": "NPAgent",
+		"Behaviour": ["Pacifist"],
 		"Collision": "Small",
 		"Radius": "16",
 		"DisplayName": true,
 		"Stat": {
 			"walkSpeed": 50,
 		},
-	}
+	},
+	"2003": {
+		"Name": "Locks",
+		"Ethnicity": "CaveLocks",
+		"Behaviour": ["Immobile", "Pacifist"],
+		"Collision": "Large",
+		"Radius": "32",
+		"DisplayName": true,
+	},
 }

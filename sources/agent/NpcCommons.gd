@@ -28,39 +28,51 @@ static var Farewells : PackedStringArray = [
 	"Goodbye for now."
 ]
 
-# To Client
-static func Chat(npc : NpcAgent, pc : PlayerAgent, chat : String):
-	if npc and pc:
+# Display
+static func PushNotification(pc : BaseAgent, text : String):
+	if pc:
+		if pc is PlayerAgent:
+			var peerID : int = Launcher.Network.Server.GetRid(pc)
+			if peerID != NetworkCommons.RidUnknown:
+				Launcher.Network.PushNotification(text, peerID)
+		elif pc is NpcAgent:
+			var inst : WorldInstance = WorldAgent.GetInstanceFromAgent(pc)
+			if inst:
+				Launcher.Network.Server.NotifyInstance(inst, "PushNotification", [text])
+
+# Context sent to client
+static func Chat(npc : NpcAgent, pc : BaseAgent, chat : String):
+	if npc and pc and pc is PlayerAgent:
 		var peerID : int = Launcher.Network.Server.GetRid(pc)
 		if peerID != NetworkCommons.RidUnknown:
 			Launcher.Network.ChatAgent(npc.get_rid().get_id(), chat, peerID)
 
-static func ContextText(npc : NpcAgent, pc : PlayerAgent, text : String):
-	if npc and pc:
+static func ContextText(pc : BaseAgent, author : String, text : String):
+	if pc and pc is PlayerAgent:
 		var peerID : int = Launcher.Network.Server.GetRid(pc)
 		if peerID != NetworkCommons.RidUnknown:
-			Launcher.Network.ContextText(npc.get_rid().get_id(), text, peerID)
+			Launcher.Network.ContextText(author, text, peerID)
 
-static func ContextChoices(pc : PlayerAgent, texts : PackedStringArray):
-	if pc:
+static func ContextChoices(pc : BaseAgent, texts : PackedStringArray):
+	if pc and pc is PlayerAgent:
 		var peerID : int = Launcher.Network.Server.GetRid(pc)
 		if peerID != NetworkCommons.RidUnknown:
 			Launcher.Network.ContextChoice(texts, peerID)
 
-static func ContextContinue(pc : PlayerAgent):
-	if pc:
+static func ContextContinue(pc : BaseAgent):
+	if pc and pc is PlayerAgent:
 		var peerID : int = Launcher.Network.Server.GetRid(pc)
 		if peerID != NetworkCommons.RidUnknown:
 			Launcher.Network.ContextContinue(peerID)
 
-static func ContextClose(pc : PlayerAgent):
-	if pc:
+static func ContextClose(pc : BaseAgent):
+	if pc and pc is PlayerAgent:
 		var peerID : int = Launcher.Network.Server.GetRid(pc)
 		if peerID != NetworkCommons.RidUnknown:
 			Launcher.Network.ContextClose(peerID)
 
-static func ToggleContext(pc : PlayerAgent, enable : bool):
-	if pc:
+static func ToggleContext(pc : BaseAgent, enable : bool):
+	if pc and pc is PlayerAgent:
 		var peerID : int = Launcher.Network.Server.GetRid(pc)
 		if peerID != NetworkCommons.RidUnknown:
 			Launcher.Network.ToggleContext(enable, peerID)
@@ -73,8 +85,17 @@ static func GetRandomFarewell(nick : String) -> String:
 	var farewell : String = Farewells[randi() % Farewells.size()]
 	return farewell if farewell.find("%s") == -1 else farewell % [nick]
 
-# From Client
-static func TryCloseContext(pc : PlayerAgent):
-	if pc and pc.currentScript and not pc.currentScript.IsWaiting():
-		pc.currentScript.ToggleWindow(false)
+# Context received from client
+static func TryCloseContext(pc : BaseAgent):
+	if pc and pc is PlayerAgent and pc.ownScript and not pc.ownScript.IsWaiting():
+		pc.ownScript.ToggleWindow(false)
 		pc.ClearScript()
+
+# Timer
+static func AddTimer(caller : BaseAgent, delay : float, callback : Callable):
+	if caller and caller.ownScript:
+		var newTimer : Timer = Callback.SelfDestructTimer(caller, delay, caller.ownScript.TimeOut, [callback])
+		if newTimer:
+			caller.ownScript.timerCount += 1
+		return newTimer
+	return null

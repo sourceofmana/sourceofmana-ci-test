@@ -12,7 +12,7 @@ func WarpPlayer(map : String, _rpcID : int = NetworkCommons.RidSingleMode):
 func EmotePlayer(playerID : int, emoteID : int, _rpcID : int = NetworkCommons.RidSingleMode):
 	var entity : Entity = Entities.Get(playerID)
 	if entity && entity.get_parent() && entity.interactive:
-		entity.interactive.DisplayEmote(emoteID)
+		entity.interactive.DisplayEmote.call_deferred(emoteID)
 
 func AddEntity(agentID : int, entityType : ActorCommons.Type, entityID : String, nick : String, velocity : Vector2, position : Vector2i, orientation : Vector2, state : ActorCommons.State, skillCastID : int, _rpcID : int = NetworkCommons.RidSingleMode):
 	if Launcher.Map:
@@ -37,17 +37,16 @@ func ChatAgent(ridAgent : int, text : String, _rpcID : int = NetworkCommons.RidS
 			if entity.type == ActorCommons.Type.PLAYER && Launcher.GUI:
 				Launcher.GUI.chatContainer.AddPlayerText(entity.nick, text)
 			if entity.interactive:
-				entity.interactive.DisplaySpeech(text)
+				entity.interactive.DisplaySpeech.call_deferred(text)
 
 func ToggleContext(enable : bool, _rpcID : int = NetworkCommons.RidSingleMode):
 	if enable:
 		Launcher.GUI.dialogueWindow.Clear()
 	Launcher.GUI.dialogueWindow.set_visible(enable)
 
-func ContextText(ridAgent : int, text : String, _rpcID : int = NetworkCommons.RidSingleMode):
-	var entity : Entity = Entities.Get(ridAgent)
-	if entity:
-		Launcher.GUI.dialogueWindow.AddName(entity.nick)
+func ContextText(author : String, text : String, _rpcID : int = NetworkCommons.RidSingleMode):
+	if not author.is_empty():
+		Launcher.GUI.dialogueWindow.AddName(author)
 	Launcher.GUI.dialogueWindow.AddDialogue(text)
 	Launcher.GUI.dialogueWindow.ToggleButton(false, "")
 
@@ -75,18 +74,18 @@ func TargetAlteration(ridAgent : int, targetID : int, value : int, alteration : 
 		var entity : Entity = Entities.Get(targetID)
 		var caller : Entity = Entities.Get(ridAgent)
 		if caller && entity && entity.get_parent() and entity.interactive:
-			entity.interactive.DisplayAlteration(entity, caller, value, alteration, skillID)
+			entity.interactive.DisplayAlteration.call_deferred(entity, caller, value, alteration, skillID)
 
 func Casted(agentID : int, skillID : int, cooldown : float, _rpcID : int = NetworkCommons.RidSingleMode):
 	var entity : Entity = Entities.Get(agentID)
 	if entity and entity.get_parent() and entity.interactive:
-		entity.interactive.DisplaySkill(entity, skillID, cooldown)
+		entity.interactive.DisplaySkill.call_deferred(entity, skillID, cooldown)
 
 func TargetLevelUp(targetID : int, _rpcID : int = NetworkCommons.RidSingleMode):
 	if Launcher.Map:
 		var entity : Entity = Entities.Get(targetID)
 		if entity and entity.get_parent() and entity.interactive:
-			entity.interactive.DisplayLevelUp()
+			entity.interactive.DisplayLevelUp.call_deferred()
 			entity.stat.attributes_updated.emit()
 
 func Morphed(ridAgent : int, morphID : String, morphed : bool, _rpcID : int = NetworkCommons.RidSingleMode):
@@ -154,6 +153,14 @@ func RefreshInventory(cells : Dictionary, _rpcID : int = NetworkCommons.RidSingl
 	if Launcher.GUI and Launcher.GUI.inventoryWindow:
 		Launcher.GUI.inventoryWindow.RefreshInventory()
 
+func DropAdded(dropID : int, itemID : int, pos : Vector2, _rpcID : int = NetworkCommons.RidSingleMode):
+	if Launcher.Map and itemID in DB.ItemsDB:
+		Launcher.Map.AddDrop(dropID, DB.ItemsDB[itemID], pos)
+
+func DropRemoved(dropID : int, _rpcID : int = NetworkCommons.RidSingleMode):
+	if Launcher.Map:
+		Launcher.Map.RemoveDrop(dropID)
+#
 func PushNotification(notif : String, _rpcID : int = NetworkCommons.RidSingleMode):
 	if Launcher.GUI:
 		Launcher.GUI.notificationLabel.AddNotification(notif)

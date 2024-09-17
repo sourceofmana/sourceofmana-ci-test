@@ -2,8 +2,7 @@ extends Object
 class_name SkillCommons
 
 # Constants
-const SkillNone : int					= -1
-const SkillDefaultAttack : int			= 0
+const SkillMeleeName : String			= "Melee"
 
 # Actions
 enum ConsomeType
@@ -74,11 +73,11 @@ static func GetSurroundingTargets(agent : BaseAgent, skill : SkillCell) -> Array
 
 	if skill.effects.has(CellCommons.effectDamage):
 		for neighbour in neighbours[1]:
-			if ActorCommons.IsAlive(neighbour) and IsNear(agent, neighbour, GetRange(agent, skill)):
+			if IsTargetable(agent, neighbour, skill):
 				targets.append(neighbour)
 	if skill.effects.has(CellCommons.effectHP):
 		for neighbour in neighbours[2]:
-			if ActorCommons.IsAlive(neighbour) and IsNotSelf(agent, neighbour) and IsNear(agent, neighbour, GetRange(agent, skill)):
+			if IsTargetable(agent, neighbour, skill):
 				targets.append(neighbour)
 
 	return targets
@@ -94,13 +93,17 @@ static func IsNotSelf(agent : BaseAgent, target : BaseAgent) -> bool:
 	return agent != target
 
 static func IsNear(agent : BaseAgent, target : BaseAgent, skillRange : int) -> bool:
-	return WorldNavigation.GetPathLength(agent, target.position) - agent.entityRadius - target.entityRadius <= skillRange
+	var filteredRange : float = skillRange + agent.entityRadius + target.entityRadius
+	return WorldNavigation.GetPathLengthSquared(agent, target.position) <= filteredRange * filteredRange
 
 static func IsSameMap(agent : BaseAgent, target : BaseAgent) -> bool:
 	return WorldAgent.GetMapFromAgent(agent) == WorldAgent.GetMapFromAgent(target)
 
 static func IsTargetable(agent : BaseAgent, target : BaseAgent, skill : SkillCell) -> bool:
-	return IsNotSelf(agent, target) and ActorCommons.IsAlive(target) and IsSameMap(agent, target) and IsNear(agent, target, GetRange(agent, skill))
+	return IsInteractable(agent, target) and IsNear(agent, target, GetRange(agent, skill))
+
+static func IsInteractable(agent : BaseAgent, target : BaseAgent) -> bool:
+	return IsNotSelf(agent, target) and ActorCommons.IsAlive(target) and IsSameMap(agent, target)
 
 static func IsCasting(agent : BaseAgent, skill : SkillCell = null) -> bool:
 	return (agent.currentSkillID == skill.id) if skill else DB.SkillsDB.has(agent.currentSkillID)
@@ -118,4 +121,4 @@ static func HasSkill(agent : BaseAgent, skill : SkillCell) -> bool:
 	return agent.skillSet.find(skill) != -1
 
 static func HasActionInProgress(agent : BaseAgent) -> bool:
-	return agent.currentSkillID >= SkillDefaultAttack or not agent.actionTimer.is_stopped()
+	return agent.currentSkillID != DB.UnknownHash or not agent.actionTimer.is_stopped()

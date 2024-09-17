@@ -103,8 +103,8 @@ func ToggleContext(enable : bool, rpcID : int = NetworkCommons.RidSingleMode):
 	NetCallClient("ToggleContext", [enable], rpcID)
 
 @rpc("authority", "call_remote", "reliable", EChannel.ACTION)
-func ContextText(ridAgent : int, text : String, rpcID : int = NetworkCommons.RidSingleMode):
-	NetCallClient("ContextText", [ridAgent, text], rpcID)
+func ContextText(author : String, text : String, rpcID : int = NetworkCommons.RidSingleMode):
+	NetCallClient("ContextText", [author, text], rpcID)
 
 @rpc("authority", "call_remote", "reliable", EChannel.ACTION)
 func ContextContinue(rpcID : int = NetworkCommons.RidSingleMode):
@@ -199,6 +199,19 @@ func RetrieveInventory(rpcID : int = NetworkCommons.RidSingleMode):
 func RefreshInventory(cells : Dictionary, rpcID : int = NetworkCommons.RidSingleMode):
 	NetCallClient("RefreshInventory", [cells], rpcID)
 
+# Drop
+@rpc("authority", "call_remote", "reliable", EChannel.ENTITY)
+func DropAdded(dropID : int, itemID : int, pos : Vector2, rpcID : int = NetworkCommons.RidSingleMode):
+	NetCallClient("DropAdded", [dropID, itemID, pos], rpcID)
+
+@rpc("authority", "call_remote", "reliable", EChannel.ENTITY)
+func DropRemoved(dropID : int, rpcID : int = NetworkCommons.RidSingleMode):
+	NetCallClient("DropRemoved", [dropID], rpcID)
+
+@rpc("any_peer", "call_remote", "reliable", EChannel.ENTITY)
+func PickupDrop(dropID : int, rpcID : int = NetworkCommons.RidSingleMode):
+	NetCallServer("PickupDrop", [dropID], rpcID)
+
 #
 func NetSpamControl(rpcID : int, methodName : String, actionDelta : int) -> bool:
 	if Server:
@@ -213,19 +226,19 @@ func NetCallServer(methodName : String, args : Array, rpcID : int, actionDelta :
 		if NetSpamControl(rpcID, methodName, actionDelta):
 			Server.callv(methodName, args + [rpcID])
 	else:
-		callv("rpc_id", [1, methodName] + args + [uniqueID])
+		callv.call_deferred("rpc_id", [1, methodName] + args + [uniqueID])
 
 func NetCallClient(methodName : String, args : Array, rpcID : int):
 	if Client:
 		Client.callv(methodName, args)
 	else:
-		callv("rpc_id", [rpcID, methodName] + args)
+		callv.call_deferred("rpc_id", [rpcID, methodName] + args)
 
 func NetCallClientGlobal(methodName : String, args : Array):
 	if Client:
 		Client.callv(methodName, args)
 	else:
-		callv("rpc", [methodName] + args)
+		callv.call_deferred("rpc", [methodName] + args)
 
 func NetMode(isClient : bool, isServer : bool):
 	if isClient:

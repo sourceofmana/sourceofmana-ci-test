@@ -63,10 +63,13 @@ func ToggleChatNewLine():
 
 #
 func EnterLoginMenu():
+	infoContext.set_visible(false)
+
 	menu.SetItemsVisible(false)
 	stats.set_visible(false)
 	statWindow.set_visible(false)
 
+	dialogueWindow.set_visible(false)
 	notificationLabel.set_visible(false)
 	menu.set_visible(false)
 	shortcuts.set_visible(false)
@@ -79,10 +82,11 @@ func EnterLoginMenu():
 
 func EnterGame():
 	if Launcher.Player:
+		infoContext.Clear()
 		infoContext.Push(ContextData.new("gp_interact"))
-		infoContext.Push(ContextData.new("gp_sit"))
+		infoContext.Push(ContextData.new("gp_untarget"))
 		infoContext.Push(ContextData.new("gp_morph"))
-		infoContext.Push(ContextData.new("gp_target"))
+		infoContext.Push(ContextData.new("gp_sit"))
 		infoContext.FadeIn()
 
 		background.set_visible(false)
@@ -131,4 +135,5 @@ func _on_ui_margin_resized():
 
 	if settingsWindow:
 		settingsWindow.set_fullscreen(DisplayServer.window_get_mode(0) == DisplayServer.WINDOW_MODE_FULLSCREEN)
+		settingsWindow.set_windowPos(DisplayServer.window_get_position(0))
 		settingsWindow.set_resolution(DisplayServer.window_get_size(0))

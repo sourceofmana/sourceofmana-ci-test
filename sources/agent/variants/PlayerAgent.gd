@@ -5,7 +5,7 @@ class_name PlayerAgent
 var lastStat : ActorStats				= ActorStats.new()
 var respawnDestination : Destination	= Destination.new()
 var exploreOrigin : Destination			= Destination.new()
-var currentScript : NpcScript			= null
+var ownScript : NpcScript			= null
 
 #
 static func GetEntityType() -> ActorCommons.Type: return ActorCommons.Type.PLAYER
@@ -57,7 +57,7 @@ func Morph(notifyMorphing : bool, morphID : String = ""):
 
 	var morphData : EntityData = Instantiate.FindEntityReference(morphID)
 	stat.Morph(morphData)
-	Launcher.Network.Server.NotifyInstance(self, "Morphed", [morphID, notifyMorphing])
+	Launcher.Network.Server.NotifyNeighbours(self, "Morphed", [morphID, notifyMorphing])
 
 #
 func _physics_process(delta):
@@ -97,9 +97,9 @@ func WarpTo(dest : Destination):
 
 #
 func AddScript(npc : NpcAgent):
-	if npc and npc.scriptPath:
-		currentScript = npc.scriptPreset.new(npc, self)
+	if npc and npc.playerScriptPreset:
+		ownScript = npc.playerScriptPreset.new(npc, self)
 
 func ClearScript():
-	if currentScript:
-		currentScript = null
+	if ownScript:
+		ownScript = null

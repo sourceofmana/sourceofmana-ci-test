@@ -31,12 +31,12 @@ func ConnectPlayer(nickname : String, rpcID : int = NetworkCommons.RidSingleMode
 	if not GetAgent(rpcID) and not nickname in onlineList.GetPlayerNames():
 		var agent : PlayerAgent = WorldAgent.CreateAgent(Launcher.World.defaultSpawn, 0, nickname)
 		if agent:
-			playerMap[rpcID].agentRID = agent.get_rid().get_id()
-			agent.inventory.ImportInventory({0: 5, 1: 2})
+			agent.stat.SetAttributes(ActorCommons.DefaultAttributes)
+			agent.inventory.ImportInventory(ActorCommons.DefaultInventory)
 
+			playerMap[rpcID].agentRID = agent.get_rid().get_id()
 			onlineList.UpdateJson()
 			Util.PrintLog("Server", "Player connected: %s (%d)" % [nickname, rpcID])
-
 	elif rpcID != NetworkCommons.RidSingleMode:
 		Launcher.Network.peer.disconnect_peer(rpcID)
 
@@ -87,15 +87,15 @@ func TriggerRespawn(rpcID : int = NetworkCommons.RidSingleMode):
 		player.Respawn()
 
 func TriggerEmote(emoteID : int, rpcID : int = NetworkCommons.RidSingleMode):
-	NotifyInstance(GetAgent(rpcID), "EmotePlayer", [emoteID])
+	NotifyNeighbours(GetAgent(rpcID), "EmotePlayer", [emoteID])
 
 func TriggerChat(text : String, rpcID : int = NetworkCommons.RidSingleMode):
-	NotifyInstance(GetAgent(rpcID), "ChatAgent", [text])
+	NotifyNeighbours(GetAgent(rpcID), "ChatAgent", [text])
 
 func TriggerChoice(choiceID : int, rpcID : int = NetworkCommons.RidSingleMode):
 	var player : PlayerAgent = GetAgent(rpcID)
-	if player and player.currentScript:
-		player.currentScript.InteractChoice(choiceID)
+	if player and player.ownScript:
+		player.ownScript.InteractChoice(choiceID)
 
 func TriggerCloseContext(rpcID : int = NetworkCommons.RidSingleMode):
 	var player : PlayerAgent = GetAgent(rpcID)
@@ -153,6 +153,11 @@ func RetrieveInventory(rpcID : int = NetworkCommons.RidSingleMode):
 	if player and player.inventory:
 		Launcher.Network.RefreshInventory(player.inventory.ExportInventory(), rpcID)
 
+func PickupDrop(dropID : int, rpcID : int = NetworkCommons.RidSingleMode):
+	var player : PlayerAgent = GetAgent(rpcID)
+	if player:
+		WorldDrop.PickupDrop(dropID, player)
+
 #
 func GetRid(player : PlayerAgent) -> int:
 	var playerRid : int = player.get_rid().get_id()
@@ -172,7 +177,7 @@ func GetAgent(rpcID : int) -> PlayerAgent:
 
 	return player
 
-func NotifyInstance(agent : BaseAgent, callbackName : String, args : Array, inclusive : bool = true):
+func NotifyNeighbours(agent : BaseAgent, callbackName : String, args : Array, inclusive : bool = true):
 	if not agent:
 		Util.Assert(false, "Agent is misintantiated, could not notify instance players with " + callbackName)
 		return
@@ -187,6 +192,14 @@ func NotifyInstance(agent : BaseAgent, callbackName : String, args : Array, incl
 				var peerID = GetRid(player)
 				if peerID != NetworkCommons.RidUnknown:
 					Launcher.Network.callv(callbackName, [currentPlayerID] + args + [peerID])
+
+func NotifyInstance(inst : WorldInstance, callbackName : String, args : Array):
+	if inst:
+		for player in inst.players:
+			if player != null:
+				var peerID = GetRid(player)
+				if peerID != NetworkCommons.RidUnknown:
+					Launcher.Network.callv(callbackName, args + [peerID])
 
 #
 func ConnectPeer(rpcID : int):

@@ -1,5 +1,5 @@
 extends Object
-class_name EntityInventory
+class_name ActorInventory
 
 var actor : Actor			= null
 var items: Array[Item]		= []
@@ -35,6 +35,9 @@ func PushItem(cell : BaseCell, count : int) -> bool:
 	return true
 
 func PopItem(cell : BaseCell, count : int) -> bool:
+	if count <= 0 or not cell:
+		return false
+
 	var toRemove : Array[Item] = []
 	for item in items:
 		if item.cell.name == cell.name:
@@ -57,6 +60,27 @@ func PopItem(cell : BaseCell, count : int) -> bool:
 
 	return false
 
+func HasItem(cell : BaseCell, count : int) -> bool:
+	if count <= 0 or not cell:
+		return false
+
+	var totalCount : int = 0
+	for item in items:
+		if item.cell.id == cell.id:
+			if cell.stackable:
+				return item.count >= count
+			else:
+				totalCount += 1
+				if totalCount >= count:
+					return true
+	return false
+
+func HasSpace(count : int) -> bool:
+	var inventoryCount : int = 0
+	for item in items:
+		inventoryCount += 1 if item.cell.stackable else item.count
+	return inventoryCount + count < ActorCommons.InventorySize
+
 #
 func GetWeight() -> float:
 	var weight : float = 0.0
@@ -74,25 +98,31 @@ func UseItem(cell : BaseCell):
 			actor.stat.SetStamina(cell.effects[CellCommons.effectStamina])
 
 #
-func AddItem(cell : BaseCell, count : int = 1):
+func AddItem(cell : BaseCell, count : int = 1) -> bool:
 	if PushItem(cell, count):
-		var peerID : int = Launcher.Network.Server.GetRid(actor)
-		if peerID != NetworkCommons.RidUnknown:
-			Launcher.Network.ItemAdded(cell.id, count, peerID)
-
+		if actor is PlayerAgent:
+			var peerID : int = Launcher.Network.Server.GetRid(actor)
+			if peerID != NetworkCommons.RidUnknown:
+				Launcher.Network.ItemAdded(cell.id, count, peerID)
+		return true
+	return false
 
 func RemoveItem(cell : BaseCell, count : int = 1) -> bool:
 	if PopItem(cell, count):
-		var peerID : int = Launcher.Network.Server.GetRid(actor)
-		if peerID != NetworkCommons.RidUnknown:
-			Launcher.Network.ItemRemoved(cell.id, count, peerID)
+		if actor is PlayerAgent:
+			var peerID : int = Launcher.Network.Server.GetRid(actor)
+			if peerID != NetworkCommons.RidUnknown:
+				Launcher.Network.ItemRemoved(cell.id, count, peerID)
 		return true
 	return false
 
 #
 func ImportInventory(data : Dictionary):
 	for key in data.keys():
-		PushItem(DB.ItemsDB[key], data[key])
+		var hasKey : bool = DB.ItemsDB.has(key)
+		Util.Assert(hasKey, "Could not find the requested key within the ItemsDB %d" % [key])
+		if hasKey:
+			PushItem(DB.ItemsDB[key], data[key])
 
 func ExportInventory() -> Dictionary:
 	var data : Dictionary = {}

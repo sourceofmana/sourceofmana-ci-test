@@ -49,11 +49,11 @@ static func Attack(agent : BaseAgent, target : BaseAgent, skill : SkillCell):
 			TargetMode.ZONE:
 				for zoneTarget in SkillCommons.GetSurroundingTargets(agent, skill):
 					Handle(agent, zoneTarget, skill, SkillCommons.GetRNG(hasStamina))
-				Casted(agent, null, skill)
+				Casted(agent, agent, skill)
 				return
 			TargetMode.SELF:
 				Handle(agent, agent, skill, SkillCommons.GetRNG(hasStamina))
-				Casted(agent, target, skill)
+				Casted(agent, agent, skill)
 				return
 		Missed(agent, target)
 
@@ -63,37 +63,43 @@ static func Handle(agent : BaseAgent, target : BaseAgent, skill : SkillCell, rng
 
 # Handling
 static func Casted(agent : BaseAgent, target : BaseAgent, skill : SkillCell):
-	var callable : Callable = Skill.Cast.bind(agent, target, skill) if skill.repeat and ActorCommons.IsAlive(target) else Callable()
-	agent.SetSkillCastID(SkillCommons.SkillNone)
-	var timer : Timer = Callback.SelfDestructTimer(agent, SkillCommons.GetCooldown(agent, skill), callable, skill.name + " CoolDown")
+	var callable : Callable = Callable()
+	var args : Array = []
+	if skill.repeat and ActorCommons.IsAlive(target):
+		callable = Skill.Cast
+		args = [agent, target, skill]
+
+	agent.SetSkillCastID(DB.UnknownHash)
+	var timer : Timer = Callback.SelfDestructTimer(agent, SkillCommons.GetCooldown(agent, skill), callable, args, skill.name + " CoolDown")
 	agent.cooldownTimers[skill.name] = timer
-	Launcher.Network.Server.NotifyInstance(agent, "Casted", [skill.id, timer.time_left])
+
+	if target:
+		Launcher.Network.Server.NotifyNeighbours(target, "Casted", [skill.id, timer.time_left])
 
 static func Damaged(agent : BaseAgent, target : BaseAgent, skill : SkillCell, rng : float):
 	var info : AlterationInfo = SkillCommons.GetDamage(agent, target, skill, rng)
 	if target.aiTimer:
 		target.AddAttacker(agent, info.value)
-		AI.SetState(target, AI.State.ATTACK)
 	target.stat.SetHealth(-info.value)
-	Launcher.Network.Server.NotifyInstance(agent, "TargetAlteration", [target.get_rid().get_id(), info.value, info.type, skill.id])
+	Launcher.Network.Server.NotifyNeighbours(agent, "TargetAlteration", [target.get_rid().get_id(), info.value, info.type, skill.id])
 
 static func Healed(agent : BaseAgent, target : BaseAgent, skill : SkillCell, rng : float):
 	var heal : int = SkillCommons.GetHeal(agent, target, skill, rng)
 	target.stat.SetHealth(heal)
-	Launcher.Network.Server.NotifyInstance(agent, "TargetAlteration", [target.get_rid().get_id(), heal, ActorCommons.Alteration.HEAL, skill.id])
+	Launcher.Network.Server.NotifyNeighbours(agent, "TargetAlteration", [target.get_rid().get_id(), heal, ActorCommons.Alteration.HEAL, skill.id])
 
 static func Stopped(agent : BaseAgent):
 	if SkillCommons.HasActionInProgress(agent):
-		agent.SetSkillCastID(SkillCommons.SkillNone)
+		agent.SetSkillCastID(DB.UnknownHash)
 		Callback.ClearTimer(agent.actionTimer)
 		if agent.aiTimer:
-			AI.SetState(agent, AI.State.IDLE)
+			AI.SetState(agent, AICommons.State.IDLE)
 
 static func Missed(agent : BaseAgent, target : BaseAgent):
 	if target == null:
 		return
-	Launcher.Network.Server.NotifyInstance(agent, "TargetAlteration", [target.get_rid().get_id(), 0, ActorCommons.Alteration.MISS, SkillCommons.SkillNone])
+	Launcher.Network.Server.NotifyNeighbours(agent, "TargetAlteration", [target.get_rid().get_id(), 0, ActorCommons.Alteration.MISS, DB.UnknownHash])
 	Stopped(agent)
 
 static func Delayed(agent : BaseAgent, target : BaseAgent, skill : SkillCell):
-	Launcher.Network.Server.NotifyInstance(agent, "TargetAlteration", [target.get_rid().get_id(), 0, ActorCommons.Alteration.PROJECTILE, skill.id])
+	Launcher.Network.Server.NotifyNeighbours(agent, "TargetAlteration", [target.get_rid().get_id(), 0, ActorCommons.Alteration.PROJECTILE, skill.id])

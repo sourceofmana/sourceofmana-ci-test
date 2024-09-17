@@ -6,6 +6,7 @@ var id : int							= 0
 var npcs : Array[BaseAgent]				= []
 var mobs : Array[BaseAgent]				= []
 var players : Array[BaseAgent]			= []
+var drops : Dictionary					= {}
 var map : WorldMap						= null
 
 #
@@ -34,7 +35,7 @@ static func Create(_map : WorldMap, instanceID : int = 0) -> WorldInstance:
 
 #
 func QueryProcessMode():
-	Callback.SelfDestructTimer(Launcher, 10, RefreshProcessMode, "ProcessMode_" + name)
+	Callback.SelfDestructTimer(Launcher, 10, RefreshProcessMode, [], "ProcessMode_" + name)
 
 func RefreshProcessMode():
 	set_process_mode(ProcessMode.PROCESS_MODE_DISABLED if players.size() == 0 else ProcessMode.PROCESS_MODE_INHERIT)

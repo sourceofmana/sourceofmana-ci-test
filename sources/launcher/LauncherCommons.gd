@@ -6,7 +6,7 @@ const ProjectName : String				= "Source of Mana"
 
 # Map
 const DefaultStartMap : String			= "Splatyna Cave Entrance"
-const DefaultStartPos : Vector2			= Vector2(2456, 3504)
+const DefaultStartPos : Vector2			= Vector2(1456, 1504)
 
 # MapPool
 const EnableMapPool : bool				= false
