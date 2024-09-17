@@ -79,9 +79,6 @@ jobs:
           echo "GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey" >> $GITHUB_ENV
           echo "GODOT_ANDROID_KEYSTORE_DEBUG_PASS=android" >> $GITHUB_ENV
           echo "GODOT_ANDROID_KEYSTORE_DEBUG_PATH=$HOME/debug_keystore" >> $GITHUB_ENV
-          echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=androiddebugkey" >> $GITHUB_ENV
-          echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASS=android" >> $GITHUB_ENV
-          echo "GODOT_ANDROID_KEYSTORE_RELEASE_PATH=$HOME/debug_keystore" >> $GITHUB_ENV
           echo "$DEBUG_KEYSTORE" | base64 -d > $HOME/debug_keystore
           echo "XDG_DATA_CONFIG: $XDG_DATA_CONFIG, XDG_DATA_HOME: $XDG_DATA_HOME"
           cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
