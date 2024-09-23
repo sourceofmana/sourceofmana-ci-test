@@ -74,11 +74,11 @@ jobs:
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
           mkdir -v -p ~/.config/
-          printf '%s\n\n%s\n%s\n' "[gd_resource type=\"EditorSettings\" format=3]" "[resource]" "$(cat /root/.config/godot/editor_settings-4.tres)" > /root/.config/godot/editor_settings-4.tres
+          printf '%s\n%s\n%s\n' "[gd_resource type=\"EditorSettings\" format=3]" "[resource]" "$(cat /root/.config/godot/editor_settings-4.tres)" > /root/.config/godot/editor_settings-4.tres
           echo 'export/android/java_sdk_path = "/usr/lib/jvm/java-17-openjdk-amd64"' >> /root/.config/godot/editor_settings-4.tres
           cat /root/.config/godot/editor_settings-4.tres
           #cp /root/.config/godot/editor_settings-4.tres /root/.config/godot/editor_settings-4.3.tres
-          #cp -r /root/.config/godot ~/.config/godot
+          cp -r /root/.config/godot ~/.config/godot
           #echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> $GITHUB_ENV
           echo "GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey" >> $GITHUB_ENV
           echo "GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android" >> $GITHUB_ENV
