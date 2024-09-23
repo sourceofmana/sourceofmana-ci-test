@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions: write-all
     container:
-      image: barichello/godot-ci:4.3
+      image: NetSysFire/godot-ci:4.3
     name: Export ${{ matrix.name }}
     steps:
       - name: Checkout
@@ -74,17 +74,15 @@ jobs:
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
           mkdir -v -p ~/.config/
-          printf '%s\n%s\n%s\n' "[gd_resource type=\"EditorSettings\" format=3]" "[resource]" "$(cat /root/.config/godot/editor_settings-4.tres)" > /root/.config/godot/editor_settings-4.tres
-          echo 'export/android/java_sdk_path = "/usr/lib/jvm/java-17-openjdk-amd64"' >> /root/.config/godot/editor_settings-4.tres
           cat /root/.config/godot/editor_settings-4.tres
           cp /root/.config/godot/editor_settings-4.tres /root/.config/godot/editor_settings-4.3.tres
           mv /root/.config/godot ~/.config/godot
           #echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> $GITHUB_ENV
-          echo "GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey" >> $GITHUB_ENV
-          echo "GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android" >> $GITHUB_ENV
+          #echo "GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey" >> $GITHUB_ENV
+          #echo "GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android" >> $GITHUB_ENV
           echo "GODOT_ANDROID_KEYSTORE_DEBUG_PATH=$HOME/debug_keystore" >> $GITHUB_ENV
-          echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=androiddebugkey" >> $GITHUB_ENV
-          echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=android" >> $GITHUB_ENV
+          #echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=androiddebugkey" >> $GITHUB_ENV
+          #echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=android" >> $GITHUB_ENV
           echo "GODOT_ANDROID_KEYSTORE_RELEASE_PATH=$HOME/debug_keystore" >> $GITHUB_ENV
           echo "$DEBUG_KEYSTORE" | base64 -d > $HOME/debug_keystore
           echo "XDG_DATA_CONFIG: $XDG_DATA_CONFIG, XDG_DATA_HOME: $XDG_DATA_HOME"
