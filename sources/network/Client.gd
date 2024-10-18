@@ -57,17 +57,7 @@ func ContextClose(_rpcID : int = NetworkCommons.RidSingleMode):
 	Launcher.GUI.dialogueWindow.ToggleButton(true, "Close")
 
 func ContextChoice(texts : PackedStringArray, _rpcID : int = NetworkCommons.RidSingleMode):
-	Launcher.GUI.dialogueWindow.ToggleButton(false, "")
-	Launcher.GUI.choiceContext.Clear()
-	if texts.size() > 0:
-		Launcher.GUI.choiceContext.Push(ContextData.new("ui_context_validate", texts[0], Launcher.Network.TriggerChoice.bind(0)))
-	if texts.size() > 1:
-		Launcher.GUI.choiceContext.Push(ContextData.new("ui_context_cancel", texts[1], Launcher.Network.TriggerChoice.bind(1)))
-	if texts.size() > 2:
-		Launcher.GUI.choiceContext.Push(ContextData.new("ui_context_secondary", texts[2], Launcher.Network.TriggerChoice.bind(2)))
-	if texts.size() > 3:
-		Launcher.GUI.choiceContext.Push(ContextData.new("ui_context_tertiary", texts[3], Launcher.Network.TriggerChoice.bind(3)))
-	Launcher.GUI.choiceContext.FadeIn(true)
+	Launcher.GUI.dialogueWindow.AddChoices(texts)
 
 func TargetAlteration(ridAgent : int, targetID : int, value : int, alteration : ActorCommons.Alteration, skillID : int, _rpcID : int = NetworkCommons.RidSingleMode):
 	if Launcher.Map:
@@ -112,7 +102,8 @@ func UpdateActiveStats(ridAgent : int, level : int, experience : int, gp : int, 
 			entity.stat.spiritShape		= spiritShape
 			entity.stat.currentShape	= currentShape
 			if levelUp:
-				PushNotification("Level %d reached.\nFeel the mana power growing inside you!" % (level))
+				if entity == Launcher.Player:
+					PushNotification("Level %d reached.\nFeel the mana power growing inside you!" % (level))
 				entity.stat.RefreshAttributes()
 			else:
 				entity.stat.RefreshActiveStats()
@@ -131,11 +122,11 @@ func UpdateAttributes(ridAgent : int, strength : int, vitality : int, agility : 
 func ItemAdded(itemID : int, count : int, _rpcID : int = NetworkCommons.RidSingleMode):
 	if Launcher.Player and DB.ItemsDB.has(itemID):
 		var cell : BaseCell = DB.ItemsDB[itemID]
-		if cell:
-			cell.used.emit()
-			Launcher.Player.inventory.PushItem(cell, count)
-			if Launcher.GUI and Launcher.GUI.inventoryWindow:
+		if cell and Launcher.Player.inventory.PushItem(cell, count):
+			if Launcher.GUI:
+				Launcher.GUI.pickupPanel.AddLast(cell, count)
 				Launcher.GUI.inventoryWindow.RefreshInventory()
+			cell.used.emit()
 
 func ItemRemoved(itemID : int, count : int, _rpcID : int = NetworkCommons.RidSingleMode):
 	if Launcher.Player and DB.ItemsDB.has(itemID):
@@ -160,14 +151,22 @@ func DropAdded(dropID : int, itemID : int, pos : Vector2, _rpcID : int = Network
 func DropRemoved(dropID : int, _rpcID : int = NetworkCommons.RidSingleMode):
 	if Launcher.Map:
 		Launcher.Map.RemoveDrop(dropID)
+
 #
 func PushNotification(notif : String, _rpcID : int = NetworkCommons.RidSingleMode):
 	if Launcher.GUI:
 		Launcher.GUI.notificationLabel.AddNotification(notif)
 
 func DisconnectPlayer():
-	if Launcher.Map:
-		Launcher.Map.UnloadMapNode()
-	if Launcher.Player:
-		Launcher.Player.queue_free()
-		Launcher.Player = null
+	Launcher.LauncherReset()
+
+func NetworkIssue():
+	if Launcher.GUI:
+		Launcher.GUI.loginWindow.FillWarningLabel("Could not connect to the server.\nPlease contact us via our [url=%s][color=#%s]Discord server[/color][/url].\nMeanwhile be sure to test the offline mode!" % [LauncherCommons.SocialLink, UICommons.DarkTextColor])
+	Launcher.FSM.EnterState(Launcher.FSM.States.LOGIN_SCREEN)
+
+func _init():
+	if not Launcher.FSM.exit_login.is_connected(Launcher.Network.NetCreate):
+		Launcher.FSM.exit_login.connect(Launcher.Network.NetCreate)
+	if not Launcher.FSM.enter_login.is_connected(Launcher.Network.NetDestroy):
+		Launcher.FSM.enter_login.connect(Launcher.Network.NetDestroy)

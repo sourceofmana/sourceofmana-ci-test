@@ -183,15 +183,18 @@ const speechDecreaseDelay : float			= 1.5
 const speechIncreaseThreshold : int			= 15
 const speechMaxWidth : int					= 256
 const speechExtraWidth : int				= 20
+const TargetMaxSquaredDistance : float		= 512 * 512 # ~15 Tile squared length
 
 # Lifetime
 const AttackTimestampLimit : int			= 1000 * 60 * 5 # 5 minutes
-const RegenDelay : float					= 1.0
+const RegenDelay : float					= 3.0
 const DeathDelay : float					= 10.0
 const DisplayHPDelay : float				= 7.0
+const MapProcessingToggleDelay : float		= 10.0
+const MapProcessingToggleExtraDelay : float	= 60.0
 
 # Drop
-const DropDelay : float						= 15.0
+const DropDelay : float						= 60.0
 const PickupSquaredDistance : float			= 48 * 48 # 1.5 Tile squared length
 
 # Stats
@@ -204,6 +207,8 @@ static var SailingDestination : Destination	= Destination.new("Ocean", Vector2(7
 # Navigation
 const DisplacementVector : Vector2			= Vector2(32, 32)
 const MaxDisplacementSquareLength : float	= 64 * 64
+const InputApproximationUnit : int			= 12
+const MaxEntityRadiusSize : int				= 256
 
 # New player
 const DefaultAttributes : Dictionary = {

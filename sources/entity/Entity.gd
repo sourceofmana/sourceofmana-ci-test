@@ -17,15 +17,15 @@ var agentID : int						= -1
 signal entity_died
 
 # Init
-func SetData(data : EntityData):
+func SetData():
 	SetVisual(data)
 	interactive.Init(data)
 
-func SetVisual(data : EntityData, morphed : bool = false):
+func SetVisual(altData : EntityData, morphed : bool = false):
 	if morphed:
-		interactive.DisplayMorph(visual.Init, [data])
+		interactive.DisplayMorph(visual.Init, [altData])
 	else:
-		visual.Init(data)
+		visual.Init(altData)
 
 #
 func Update(nextVelocity : Vector2, gardbandPosition : Vector2, nextOrientation : Vector2, nextState : ActorCommons.State, nextskillCastID : int, forceValue : bool = false):
@@ -63,11 +63,14 @@ func ClearTarget():
 	if target != null:
 		if target.interactive.nameLabel.material:
 			target.interactive.nameLabel.material = null
-		Callback.SelfDestructTimer(target.interactive.healthBar, ActorCommons.DisplayHPDelay, target.interactive.HideHP, [], "HideHP")
+		if target.is_inside_tree():
+			Callback.SelfDestructTimer(target.interactive.healthBar, ActorCommons.DisplayHPDelay, target.interactive.HideHP, [], "HideHP")
+		else:
+			target.interactive.HideHP()
 		target = null
 
 func Target(source : Vector2, interactable : bool = true, nextTarget : bool = false):
-	var newTarget = Entities.GetNextTarget(source, target if nextTarget and target else null, interactable)
+	var newTarget = Entities.GetNextTarget(source, target if nextTarget and target != null else null, interactable)
 	if newTarget != target:
 		ClearTarget()
 		target = newTarget
@@ -97,7 +100,7 @@ func Interact():
 
 func Cast(skillID : int):
 	var skill : SkillCell = DB.SkillsDB[skillID]
-	Util.Assert(skill != null, "Skill ID is not found, can't cast it")
+	assert(skill != null, "Skill ID is not found, can't cast it")
 	if skill == null:
 		return
 
@@ -125,6 +128,8 @@ func _physics_process(delta : float):
 		move_and_slide()
 
 func _ready():
-	if Launcher.Player != self:
+	if Launcher.Player == self:
+		Launcher.Map.MapUnloaded.connect(ClearTarget)
+	else:
 		stat.active_stats_updated.connect(interactive.DisplayHP)
 	entity_died.connect(interactive.DisplayHP)

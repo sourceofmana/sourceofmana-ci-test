@@ -29,6 +29,7 @@ func UpdateLastStats():
 		Launcher.Network.UpdateActiveStats(get_rid().get_id(), stat.level, stat.experience, stat.gp, stat.health, stat.mana, stat.stamina, stat.weight, stat.entityShape, stat.spiritShape, stat.currentShape, peerID)
 		lastStat.level				= stat.level
 		lastStat.experience			= stat.experience
+		lastStat.gp					= stat.gp
 		lastStat.health				= stat.health
 		lastStat.mana				= stat.mana
 		lastStat.stamina			= stat.stamina
@@ -75,6 +76,9 @@ func _ready():
 
 	super._ready()
 
+func _exit_tree():
+	ClearScript()
+
 #
 func Respawn():
 	if not ActorCommons.IsAlive(self):
@@ -84,7 +88,7 @@ func Respawn():
 func Explore():
 	if ActorCommons.IsAlive(self):
 		var map : WorldMap = WorldAgent.GetMapFromAgent(self)
-		if map and map.spiritOnly:
+		if map and map.HasFlags(WorldMap.Flags.ONLY_SPIRIT):
 			if stat.IsSailing():
 				exploreOrigin.map = map.name
 				exploreOrigin.pos = position
@@ -94,6 +98,11 @@ func WarpTo(dest : Destination):
 	var nextMap : WorldMap = Launcher.World.GetMap(dest.map)
 	if nextMap:
 		Launcher.World.Warp(self, nextMap, dest.pos)
+
+func Killed():
+	super.Killed()
+	if ownScript:
+		ClearScript()
 
 #
 func AddScript(npc : NpcAgent):

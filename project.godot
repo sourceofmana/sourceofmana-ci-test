@@ -340,6 +340,7 @@ gp_shortcut_4={
 gp_target={
 "deadzone": 0.5,
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":69,"key_label":0,"unicode":101,"location":0,"echo":false,"script":null)
+, Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"button_index":10,"pressure":0.0,"pressed":false,"script":null)
 ]
 }
 ui_stat={
@@ -425,6 +426,7 @@ pointing/emulate_touch_from_mouse=true
 
 [physics]
 
+2d/run_on_separate_thread=true
 common/max_physics_steps_per_frame=1
 2d/physics_engine="GodotPhysics2D"
 common/physics_interpolation=true
@@ -448,7 +450,6 @@ global_illumination/sdfgi/frames_to_update_lights=4
 vram_compression/import_etc=true
 vram_compression/import_pvrtc=true
 environment/default_environment="res://default_env.tres"
-quality/driver/driver_name="GLES2"
 threads/thread_safe_bvh=true
 2d/snapping/use_gpu_pixel_snap=false
 quality/driver/fallback_to_gles2=true

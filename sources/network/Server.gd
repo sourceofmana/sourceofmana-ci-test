@@ -13,7 +13,7 @@ func AddPlayerData(networkRpcID : int):
 		playerMap[networkRpcID] = PlayerData.new()
 
 func CallMethod(networkRpcID : int, methodName : String, actionDelta : int) -> bool:
-	Util.Assert(networkRpcID in playerMap, "Could not find data related to this player: " + str(networkRpcID))
+	assert(networkRpcID in playerMap, "Could not find data related to this player: " + str(networkRpcID))
 	if networkRpcID in playerMap:
 		var oldTick : int = 0
 		if methodName in playerMap[networkRpcID].rpcDeltas:
@@ -67,7 +67,7 @@ func ClearNavigation(rpcID : int = NetworkCommons.RidSingleMode):
 
 func TriggerWarp(rpcID : int = NetworkCommons.RidSingleMode):
 	var player : PlayerAgent = GetAgent(rpcID)
-	if player:
+	if player and player.ownScript == null:
 		var warp : WarpObject = Launcher.World.CanWarp(player)
 		if warp:
 			var nextMap : WorldMap = Launcher.World.GetMap(warp.destinationMap)
@@ -96,6 +96,11 @@ func TriggerChoice(choiceID : int, rpcID : int = NetworkCommons.RidSingleMode):
 	var player : PlayerAgent = GetAgent(rpcID)
 	if player and player.ownScript:
 		player.ownScript.InteractChoice(choiceID)
+
+func TriggerNextContext(rpcID : int = NetworkCommons.RidSingleMode):
+	var player : PlayerAgent = GetAgent(rpcID)
+	if player and player.ownScript and player.ownScript.npc:
+		player.ownScript.npc.Interact(player)
 
 func TriggerCloseContext(rpcID : int = NetworkCommons.RidSingleMode):
 	var player : PlayerAgent = GetAgent(rpcID)
@@ -126,7 +131,7 @@ func TriggerMorph(rpcID : int = NetworkCommons.RidSingleMode):
 		if player.stat.spiritShape.length() == 0:
 			return
 		var map : Object = WorldAgent.GetMapFromAgent(player)
-		if map and map.spiritOnly:
+		if map and map.HasFlags(WorldMap.Flags.ONLY_SPIRIT):
 			return
 
 		player.Morph(true)
@@ -134,6 +139,7 @@ func TriggerMorph(rpcID : int = NetworkCommons.RidSingleMode):
 func TriggerSelect(targetID : int, rpcID : int = NetworkCommons.RidSingleMode):
 	var target : BaseAgent = WorldAgent.GetAgent(targetID)
 	if target:
+		Launcher.Network.UpdateAttributes(targetID, target.stat.strength, target.stat.vitality, target.stat.agility, target.stat.endurance, target.stat.concentration, rpcID)
 		Launcher.Network.UpdateActiveStats(targetID, target.stat.level, target.stat.experience, target.stat.gp, target.stat.health, target.stat.mana, target.stat.stamina, target.stat.weight, target.stat.entityShape, target.stat.spiritShape, target.stat.currentShape, rpcID)
 
 func AddAttribute(attribute : ActorCommons.Attribute, rpcID : int = NetworkCommons.RidSingleMode):
@@ -145,7 +151,7 @@ func UseItem(itemID : int, rpcID : int = NetworkCommons.RidSingleMode):
 	var cell : BaseCell = DB.ItemsDB[itemID] if DB.ItemsDB.has(itemID) else null
 	if cell and cell.usable:
 		var player : PlayerAgent = GetAgent(rpcID)
-		if player and player.inventory:
+		if player and ActorCommons.IsAlive(player) and player.inventory:
 			player.inventory.UseItem(cell)
 
 func RetrieveInventory(rpcID : int = NetworkCommons.RidSingleMode):
@@ -164,14 +170,14 @@ func GetRid(player : PlayerAgent) -> int:
 	for dataID in playerMap:
 		if playerMap[dataID].agentRID == playerRid:
 			return dataID
-	Util.Assert(false, "No playerdata associated to this user within the player map")
+	assert(false, "No playerdata associated to this user within the player map")
 	return NetworkCommons.RidUnknown
 
 func GetAgent(rpcID : int) -> PlayerAgent:
 	var player : PlayerAgent	= null
 	if rpcID in playerMap:
 		var playerData : PlayerData = playerMap.get(rpcID)
-		Util.Assert(playerData != null, "No playerdata associated to this user within the player map")
+		assert(playerData != null, "No playerdata associated to this user within the player map")
 		if playerData:
 			player = WorldAgent.GetAgent(playerData.agentRID)
 
@@ -179,7 +185,7 @@ func GetAgent(rpcID : int) -> PlayerAgent:
 
 func NotifyNeighbours(agent : BaseAgent, callbackName : String, args : Array, inclusive : bool = true):
 	if not agent:
-		Util.Assert(false, "Agent is misintantiated, could not notify instance players with " + callbackName)
+		assert(false, "Agent is misintantiated, could not notify instance players with " + callbackName)
 		return
 
 	var currentPlayerID = agent.get_rid().get_id()

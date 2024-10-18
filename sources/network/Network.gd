@@ -126,6 +126,10 @@ func TriggerChoice(choiceID : int, rpcID : int = NetworkCommons.RidSingleMode):
 func TriggerCloseContext(rpcID : int = NetworkCommons.RidSingleMode):
 	NetCallServer("TriggerCloseContext", [], rpcID)
 
+@rpc("any_peer", "call_remote", "reliable", EChannel.ACTION)
+func TriggerNextContext(rpcID : int = NetworkCommons.RidSingleMode):
+	NetCallServer("TriggerNextContext", [], rpcID)
+
 # Interact
 @rpc("any_peer", "call_remote", "reliable", EChannel.ACTION)
 func TriggerInteract(entityID : int, rpcID : int = NetworkCommons.RidSingleMode):
@@ -224,21 +228,21 @@ func NetSpamControl(rpcID : int, methodName : String, actionDelta : int) -> bool
 func NetCallServer(methodName : String, args : Array, rpcID : int, actionDelta : int = NetworkCommons.DelayDefault):
 	if Server:
 		if NetSpamControl(rpcID, methodName, actionDelta):
-			Server.callv(methodName, args + [rpcID])
+			Server.callv.call_deferred(methodName, args + [rpcID])
 	else:
-		callv.call_deferred("rpc_id", [1, methodName] + args + [uniqueID])
+		callv.call("rpc_id", [1, methodName] + args + [uniqueID])
 
 func NetCallClient(methodName : String, args : Array, rpcID : int):
 	if Client:
-		Client.callv(methodName, args)
+		Client.callv.call_deferred(methodName, args)
 	else:
-		callv.call_deferred("rpc_id", [rpcID, methodName] + args)
+		callv.call("rpc_id", [rpcID, methodName] + args)
 
 func NetCallClientGlobal(methodName : String, args : Array):
 	if Client:
-		Client.callv(methodName, args)
+		Client.callv.call_deferred(methodName, args)
 	else:
-		callv.call_deferred("rpc", [methodName] + args)
+		callv.call("rpc", [methodName] + args)
 
 func NetMode(isClient : bool, isServer : bool):
 	if isClient:
@@ -272,10 +276,10 @@ func NetCreate():
 		else:
 			ret = peer.create_client(serverAddress, NetworkCommons.ServerPort)
 
-		Util.Assert(ret == OK, "Client could not connect, please check the server adress %s and port number %d" % [serverAddress, NetworkCommons.ServerPort])
+		assert(ret == OK, "Client could not connect, please check the server adress %s and port number %d" % [serverAddress, NetworkCommons.ServerPort])
 		if ret == OK:
 			Launcher.Root.multiplayer.multiplayer_peer = peer
-			var connectedCallback : Callable = ConnectPlayer.bind(Launcher.FSM.playerName) 
+			var connectedCallback : Callable = Launcher.FSM.EnterState.bind(Launcher.FSM.States.CHAR_SCREEN)
 			if not Launcher.Root.multiplayer.connected_to_server.is_connected(connectedCallback):
 				Launcher.Root.multiplayer.connected_to_server.connect(connectedCallback)
 			if not Launcher.Root.multiplayer.connection_failed.is_connected(Client.DisconnectPlayer):
@@ -297,7 +301,7 @@ func NetCreate():
 			ret = peer.create_server(NetworkCommons.ServerPort, "*", tlsOptions)
 		else:
 			ret = peer.create_server(NetworkCommons.ServerPort)
-		Util.Assert(ret == OK, "Server could not be created, please check if your port %d is valid" % NetworkCommons.ServerPort)
+		assert(ret == OK, "Server could not be created, please check if your port %d is valid" % NetworkCommons.ServerPort)
 		if ret == OK:
 			Launcher.Root.multiplayer.multiplayer_peer = peer
 			if not Launcher.Root.multiplayer.peer_connected.is_connected(Server.ConnectPeer):
@@ -309,18 +313,17 @@ func NetCreate():
 			uniqueID = Launcher.Root.multiplayer.get_unique_id()
 
 func NetDestroy():
-	if uniqueID == NetworkCommons.RidDefault:
-		pass
-
-	if Client and Server:
-		Client.DisconnectPlayer()
-		Server.DisconnectPlayer()
-	else:
+	if peer:
 		peer.close()
-
+	if Client:
+		Client.DisconnectPlayer()
+		Client.queue_free()
+		Client = null
+	if Server:
+		Server.DisconnectPlayer()
+		Server.queue_free()
+		Server = null
 	uniqueID = NetworkCommons.RidDefault
 
 func _post_launch():
-	Launcher.FSM.exit_login.connect(NetCreate)
-	Launcher.FSM.exit_game.connect(NetDestroy)
 	isInitialized = true

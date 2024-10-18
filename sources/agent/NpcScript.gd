@@ -11,48 +11,84 @@ var timerCount : int				= 0
 var isWaitingForChoice : bool		= false
 var windowToggled : bool			= false
 
+# NPC & own script liaison
+func CallGlobal(scriptFunc : String):
+	if HasGlobal(scriptFunc):
+		npc.ownScript.call_deferred(scriptFunc)
+	else:
+		assert(false, "Could not retrieve this NPC global function: %s." % scriptFunc)
+
+func HasGlobal(scriptFunc : String) -> bool:
+	return npc and npc.ownScript and npc.ownScript.has_method(scriptFunc)
+
+func GetGlobal(scriptFunc : String) -> Callable:
+	if HasGlobal(scriptFunc):
+		var callable = npc.ownScript.get(scriptFunc)
+		if callable is Callable:
+			return callable
+	assert(false, "Could not retrieve this NPC global function: %s." % scriptFunc)
+	return Callable()
+
+func Trigger() -> bool:
+	if npc and npc.SetState(ActorCommons.State.TRIGGER):
+		CallGlobal("OnTrigger")
+		return true
+	return false
+
+func IsTriggering() -> bool:
+	return ActorCommons.IsTriggering(npc)
+
 # Monster
 func Spawn(monsterName : String, count : int = 1, position : Vector2 = Vector2.ZERO, spawnRadius : Vector2 = Vector2(64, 64)) -> Array[MonsterAgent]:
-	var agents : Array[MonsterAgent] = []
-	var inst : WorldInstance = WorldAgent.GetInstanceFromAgent(npc)
-	if inst and inst.map:
-		var spawnObject : SpawnObject = SpawnObject.new()
-		spawnObject.map					= inst.map
-		if position == Vector2.ZERO:
-			spawnObject.spawn_position	= WorldNavigation.GetRandomPosition(inst.map)
-		else:
-			spawnObject.spawn_position	= WorldNavigation.GetRandomPositionAABB(inst.map, position, spawnRadius)
-		spawnObject.type				= "Monster"
-		spawnObject.name				= monsterName
-		spawnObject.count				= count
-
-		for i in count:
-			agents.push_back(WorldAgent.CreateAgent(spawnObject, inst.id))
-	return agents
+	return NpcCommons.Spawn(npc, monsterName, count, position, spawnRadius)
 
 func MonsterCount():
 	var count : int = 0
 	if own:
-		var inst : WorldInstance = own.get_parent()
+		var inst : WorldInstance = WorldAgent.GetInstanceFromAgent(own)
 		if inst:
 			count = inst.mobs.size()
 	return count
 
+func AliveMonsterCount() -> int:
+	var count : int = 0
+	if own:
+		var inst : WorldInstance = WorldAgent.GetInstanceFromAgent(own)
+		if inst:
+			for mob in inst.mobs:
+				if ActorCommons.IsAlive(mob):
+					count += 1
+	return count
+
 func IsMonsterAlive(monsterName : String) -> bool:
 	if own:
-		var inst : WorldInstance = own.get_parent()
+		var inst : WorldInstance = WorldAgent.GetInstanceFromAgent(own)
 		if inst:
 			for mob in inst.mobs:
 				if mob and mob.nick == monsterName and ActorCommons.IsAlive(mob):
 					return true
 	return false
 
+func KillMonsters():
+	var inst : WorldInstance = WorldAgent.GetInstanceFromAgent(own)
+	if inst:
+		for mob in inst.mobs:
+			mob.stat.SetHealth(-mob.stat.current.maxHealth)
+
+# Players
+func AlivePlayerCount() -> int:
+	var count : int = 0
+	if own:
+		var inst : WorldInstance = WorldAgent.GetInstanceFromAgent(own)
+		if inst:
+			for player in inst.players:
+				if ActorCommons.IsAlive(player):
+					count += 1
+	return count
+
 # Warp
 func Warp(mapName : String, position : Vector2):
-	if own is PlayerAgent:
-		var map : WorldMap = Launcher.World.GetMap(mapName)
-		if map:
-			Launcher.World.Warp(own, map, position)
+	NpcCommons.Warp(own, mapName, position)
 
 # Quest
 func SetQuest(questID : int, state : int):
@@ -60,6 +96,8 @@ func SetQuest(questID : int, state : int):
 		if own.progress.GetQuest(questID) == ProgressCommons.UnknownProgress:
 			Notification("Quest Started: " + ProgressCommons.QuestNames[questID])
 		own.progress.SetQuest(questID, state)
+		if state == ProgressCommons.CompletedProgress:
+			Notification("Quest Completed: " + ProgressCommons.QuestNames[questID])
 
 func GetQuest(questID : int) -> int:
 	return own.progress.GetQuest(questID) if own and own.progress else ProgressCommons.UnknownProgress
@@ -67,10 +105,6 @@ func GetQuest(questID : int) -> int:
 # Display
 func Notification(text : String):
 	NpcCommons.PushNotification(own, text)
-
-# State
-func Trigger() -> bool:
-	return npc.SetState(ActorCommons.State.TRIGGER) if npc else false
 
 # Dialogue
 func Mes(mes : String):
@@ -99,8 +133,17 @@ func Farewell():
 		NpcCommons.Chat(npc, own, NpcCommons.GetRandomFarewell(own.nick))
 
 # Timer
-func AddTimer(caller : BaseAgent, delay : float, callback : Callable):
-	NpcCommons.AddTimer(caller, delay, callback)
+func AddTimer(caller : BaseAgent, delay : float, callback : Callable, timerName = "") -> Timer:
+	if caller and caller.ownScript:
+		var newTimer : Timer = null if timerName.is_empty() else caller.get_node_or_null(timerName)
+		if newTimer:
+			newTimer.start(delay)
+		else:
+			newTimer = Callback.SelfDestructTimer(caller, delay, caller.ownScript.TimeOut, [callback], timerName)
+			if newTimer:
+				caller.ownScript.timerCount += 1
+		return newTimer
+	return null
 
 func TimeOut(callback : Callable):
 	timerCount -= 1
@@ -157,6 +200,15 @@ func RemoveItem(itemID : int, count : int = 1) -> bool:
 		var cell : BaseCell = DB.GetItem(itemID)
 		return own.inventory.RemoveItem(cell, count) if cell else false
 	return false
+
+# Money & Experience
+func AddExp(value : int):
+	if value > 0 and own is PlayerAgent and own.stat:
+		own.stat.AddExperience(value)
+
+func AddGP(value : int):
+	if value > 0 and own is PlayerAgent and own.stat:
+		own.stat.AddGP(value)
 
 # Interaction logic
 func ToggleWindow(toggle : bool):
@@ -218,10 +270,11 @@ func IsWaiting() -> bool:
 
 # Default functions
 func _init(_npc : NpcAgent, _own : BaseAgent):
-	Util.Assert(_npc != null and _own != null, "Trying to init a NPC Script with a missing player or NPC")
+	assert(_npc != null and _own != null, "Trying to init a NPC Script with a missing player or NPC")
 	own = _own
 	npc = _npc
 	OnStart()
 
 func OnStart(): pass
 func OnContinue(): pass
+func OnTrigger(): pass

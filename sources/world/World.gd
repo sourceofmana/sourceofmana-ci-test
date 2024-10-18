@@ -19,18 +19,18 @@ func GetMap(mapName : String) -> WorldMap:
 
 # Core functions
 func Warp(agent : BaseAgent, newMap : WorldMap, newPos : Vector2i):
-	Util.Assert(newMap != null and agent != null, "Warp could not proceed, agent or current map missing")
+	assert(newMap != null and agent != null, "Warp could not proceed, agent or new map missing")
 	if agent and newMap:
 		WorldAgent.PopAgent(agent)
-		agent.position = agent.exploreOrigin.pos if newMap.spiritOnly and newPos == Vector2i.ZERO else newPos
+		agent.position = agent.exploreOrigin.pos if newMap.HasFlags(WorldMap.Flags.ONLY_SPIRIT) and newPos == Vector2i.ZERO else newPos
 		agent.SwitchInputMode(true)
 		Spawn(newMap, agent)
 
 func Spawn(map : WorldMap, agent : BaseAgent, instanceID : int = 0):
-	Util.Assert(map != null and instanceID < map.instances.size() and agent != null, "Spawn could not proceed, agent or map missing")
+	assert(map != null and instanceID < map.instances.size() and agent != null, "Spawn could not proceed, agent or map missing")
 	if map and instanceID < map.instances.size() and agent:
 		var inst : WorldInstance = map.instances[instanceID]
-		Util.Assert(inst != null, "Spawn could not proceed, map instance missing")
+		assert(inst != null, "Spawn could not proceed, map instance missing")
 		if inst:
 			agent.ResetNav()
 			if agent.agent:
@@ -51,7 +51,7 @@ func AgentWarped(map : WorldMap, agent : BaseAgent):
 		if playerID == NetworkCommons.RidUnknown:
 			return
 
-		if map.spiritOnly:
+		if map.HasFlags(WorldMap.Flags.ONLY_SPIRIT):
 			if not agent.stat.IsMorph():
 				agent.Morph(false, agent.stat.spiritShape)
 		else:
@@ -76,3 +76,15 @@ func _post_launch():
 	defaultSpawn.name				= "Default Entity"
 
 	isInitialized = true
+
+func DestroyAreas():
+	for area in areas.values():
+		for inst in area.instances:
+			for player in inst.players:
+				WorldAgent.RemoveAgent(player)
+			for mob in inst.mobs:
+				WorldAgent.RemoveAgent(mob)
+			for npc in inst.npcs:
+				WorldAgent.RemoveAgent(npc)
+			Launcher.Root.remove_child(inst)
+			inst.queue_free()

@@ -41,7 +41,12 @@
 		"Radius": "32",
 		"DisplayName": true,
 		"Stat": {
-			"walkSpeed": 40,
+			"walkSpeed": 50,
+			"Level": 10,
+		},
+		"Spawns": {
+			"Lilah": 3,
+			"Lulea": 3,
 		},
 	},
 	"1001": {
@@ -56,6 +61,7 @@
 		"Radius": "10",
 		"Stat": {
 			"walkSpeed": 40,
+			"Level": 5,
 		},
 		"Drops": {
 			"Dorian's Key": 1.0,
@@ -87,6 +93,7 @@
 		"Radius": "10",
 		"Stat": {
 			"walkSpeed": 40,
+			"Level": 5,
 		},
 		"Drops": {
 			"Gabriel's Key": 1.0,
@@ -127,14 +134,18 @@
 		{
 			"Body": "sprites/monsters/marvin.png",
 		},
-		"Behaviour": ["Aggressive", "Leader", "Steal"],
+		"Behaviour": ["Aggressive", "Leader", "Spawner", "Steal"],
 		"Collision": "Medium",
 		"Radius": "10",
 		"Stat": {
 			"walkSpeed": 40,
+			"Level": 5,
 		},
 		"Drops": {
 			"Marvin's Key": 1.0,
+		},
+		"Spawns": {
+			"Lilah": 2,
 		},
 	},
 	"1007": {
@@ -304,6 +315,14 @@
 		"Behaviour": ["Immobile", "Pacifist"],
 		"Collision": "Large",
 		"Radius": "32",
+		"DisplayName": true,
+	},
+	"2004": {
+		"Name": "Gabz",
+		"Ethnicity": "Player",
+		"Behaviour": ["Immobile", "Pacifist"],
+		"Collision": "Small",
+		"Radius": "16",
 		"DisplayName": true,
 	},
 }

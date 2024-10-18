@@ -58,46 +58,49 @@ const _transitions : Array[Array] = [
 	[State.HALT,		State.HALT,		State.HALT,		State.HALT],	# HALT
 ]
 
-const refreshDelay : float			= 1.0
-const fleeDistance : float			= 200
-const reachDistance : float			= 500
-const reachDistanceSquared : float	= reachDistance * reachDistance
-const maxAttackerCount : int		= 8
+const MinRefreshDelay : float		= 1.0
+const MaxRefreshDelay : float		= 5.0
+const MinWalkTimer : int			= 5
+const MaxWalkTimer : int			= 20
+const MinUnstuckTimer : int			= 2
+const MaxUnstuckTimer : int			= 10
 
+const MinOffsetDistance : int		= 30
+const MaxOffsetDistance : int		= 200
+const MaxOffsetVector : Vector2i	= Vector2i(MaxOffsetDistance, MaxOffsetDistance)
+const FleeDistance : float			= 200
+const ReachDistance : float			= 500
+const ReachDistanceSquared : float	= ReachDistance * ReachDistance
+const MaxAttackerCount : int		= 8
+const WanderDistanceSquared : float	= MaxOffsetDistance * MaxOffsetDistance
 #
-static func GetOffset() -> Vector2i:
-	const minDistance : int				= 30
-	const maxDistance : int				= 200
+static func GeRandomtOffset() -> Vector2i:
 	return Vector2i(
-		randi_range(minDistance, maxDistance),
-		randi_range(minDistance, maxDistance))
+		randi_range(MinOffsetDistance, MaxOffsetDistance),
+		randi_range(MinOffsetDistance, MaxOffsetDistance))
 
 static func GetWalkTimer() -> float:
-	const minWalkTimer : int			= 5
-	const maxWalkTimer : int			= 20
-	return randf_range(minWalkTimer, maxWalkTimer)
+	return randf_range(MinWalkTimer, MaxWalkTimer)
 
 static func GetUnstuckTimer() -> float:
-	const minUnstuckTimer : int			= 2
-	const maxUnstuckTimer : int			= 10
-	return randf_range(minUnstuckTimer, maxUnstuckTimer)
+	return randf_range(MinUnstuckTimer, MaxUnstuckTimer)
 
-static func IsStuck(agent : BaseAgent) -> bool:
+static func IsStuck(agent : AIAgent) -> bool:
 	return agent.lastPositions.size() >= 5 and abs(agent.lastPositions[0] - agent.lastPositions[4]) < 1
 
-static func IsActionInProgress(agent : BaseAgent) -> bool:
+static func IsActionInProgress(agent : AIAgent) -> bool:
 	return agent.actionTimer and not agent.actionTimer.is_stopped()
 
-static func IsAgentMoving(agent : BaseAgent):
-	return agent.hasCurrentGoal and agent.aiState == State.WALK
+static func IsAgentMoving(agent : AIAgent):
+	return agent.hasCurrentGoal
 
-static func IsReachable(agent : BaseAgent, target : BaseAgent) -> bool:
-	return SkillCommons.IsInteractable(agent, target) and WorldNavigation.GetPathLengthSquared(agent, target.position) < reachDistanceSquared
+static func IsReachable(agent : AIAgent, target : BaseAgent) -> bool:
+	return SkillCommons.IsInteractable(agent, target) and WorldNavigation.GetPathLengthSquared(agent, target.position) < ReachDistanceSquared
 
-static func CanWalk(agent: BaseAgent):
+static func CanWalk(agent: AIAgent):
 	return agent.agent != null
 
-static func GetRandomSkill(agent : BaseAgent) -> SkillCell:
+static func GetRandomSkill(agent : AIAgent) -> SkillCell:
 	if agent.skillSet.size() > 0 and agent.skillProbaSum > 0.0:
 		var randProba : float = randf_range(0.0, agent.skillProbaSum)
 		for skill in agent.skillSet:
@@ -109,31 +112,35 @@ static func GetRandomSkill(agent : BaseAgent) -> SkillCell:
 static func GetTransition(prev : State, next : State) -> State:
 	return _transitions[prev][next]
 
+static func HasExpiredNodeGoal(agent : AIAgent):
+	return agent.hasNodeGoal and (agent.nodeGoal == null or (agent.nodeGoal is BaseAgent and not ActorCommons.IsAlive(agent.nodeGoal)))
+
 # Behaviour
-static func ApplyPacifistBehaviour(agent : BaseAgent) -> bool:
+static func ApplyPacifistBehaviour(agent : AIAgent) -> bool:
 	if agent.aiState == State.ATTACK:
 		AI.SetState(agent, State.IDLE, true)
 		return true
 	return false
 
-static func ApplyNeutralBehaviour(agent : BaseAgent) -> bool:
+static func ApplyNeutralBehaviour(agent : AIAgent) -> bool:
 	if agent == null or agent.agent == null:
 		return false
 
 	var target : BaseAgent = agent.GetNearbyMostValuableAttacker()
 	if target:
-		AI.SetState(agent, AICommons.State.ATTACK, true)
+		if agent.aiState != State.ATTACK or agent.nodeGoal != target:
+			AI.SetState(agent, State.ATTACK, true)
 		return true
-	elif agent.aiState == AICommons.State.ATTACK:
-		AI.SetState(agent, AICommons.State.WALK, true)
+	elif agent.aiState == State.ATTACK:
+		AI.Reset(agent)
 	return false
 
-static func ApplyAggressiveBehaviour(agent : BaseAgent) -> bool:
+static func ApplyAggressiveBehaviour(agent : AIAgent) -> bool:
 	if agent == null:
 		return false
 
 	var nearest : PlayerAgent = null
-	var nearestSquaredDist : float = AICommons.reachDistanceSquared
+	var nearestSquaredDist : float = ReachDistanceSquared
 	var instance : WorldInstance = WorldAgent.GetInstanceFromAgent(agent)
 	for player in instance.players:
 		if SkillCommons.IsInteractable(agent, player):
@@ -143,18 +150,69 @@ static func ApplyAggressiveBehaviour(agent : BaseAgent) -> bool:
 				nearestSquaredDist = currentDist
 	if nearest:
 		agent.AddAttacker(nearest)
-		agent.aiState = AICommons.State.ATTACK
+		if agent.aiState != State.ATTACK or agent.nodeGoal != nearest:
+			AI.SetState(agent, State.ATTACK, true)
 		return true
 	return false
 
-static func ApplyStealBehaviour(_agent : BaseAgent) -> bool:
+static func ApplyStealBehaviour(agent : AIAgent) -> bool:
+	if not IsActionInProgress(agent):
+		var instance : WorldInstance = WorldAgent.GetInstanceFromAgent(agent)
+		if instance:
+			var nearest : Drop = null
+			var nearestDist : float = INF
+			for dropIdx in instance.drops:
+				var drop : Drop = instance.drops[dropIdx]
+				if drop:
+					var dist : float = WorldNavigation.GetPathLengthSquared(agent, drop.position)
+					if dist < nearestDist and dist < ReachDistanceSquared:
+						nearest = drop
+						nearestDist = dist
+			if nearest:
+				if nearestDist < ActorCommons.PickupSquaredDistance:
+					WorldDrop.PickupDrop(nearest.get_instance_id(), agent)
+				else:
+					AI.SetState(agent, State.WALK, true)
+					agent.SetNodeGoal(nearest, nearest.position)
+				return true
+
 	return false
 
-static func ApplyFollowerBehaviour(_agent : BaseAgent) -> bool:
+static func ApplyFollowerBehaviour(agent : AIAgent) -> bool:
+	if not IsActionInProgress(agent):
+		if agent.leader != null:
+			if agent.leader.aiState == State.ATTACK and agent.aiState == State.IDLE:
+				AI.SetState(agent, State.WALK, true)
+				agent.SetNodeGoal(agent.leader, agent.leader.position)
+				return true
 	return false
 
-static func ApplyImmobileBehaviour(_agent : BaseAgent) -> bool:
-	return false
+static func ApplyImmobileBehaviour(_agent : AIAgent) -> bool:
+	return false # Nothing to handle here
 
-static func ApplySpawnerBehaviour(_agent : BaseAgent) -> bool:
-	return false
+static func ApplySpawnerBehaviour(agent : AIAgent) -> bool:
+	var nbSpawned : int = 0
+	for spawn in agent.data._spawns:
+		var toSpawn : int = agent.data._spawns[spawn]
+		if spawn in agent.followers:
+			agent.followers.erase(null)
+			toSpawn -= agent.followers[spawn].size()
+		else:
+			agent.followers[spawn] = []
+		if toSpawn > 0:
+			var instance : WorldInstance = WorldAgent.GetInstanceFromAgent(agent)
+			if instance:
+				for mob in instance.mobs:
+					if mob.leader == null and mob.aiBehaviour & Behaviour.FOLLOWER and mob.nick == spawn and mob.spawnInfo.is_persistant == false:
+						agent.AddFollower(mob)
+						toSpawn -= 1
+					if toSpawn == 0:
+						break
+
+		if toSpawn > 0:
+			var spawnedAgents : Array[MonsterAgent] = NpcCommons.Spawn(agent, spawn, toSpawn, agent.position, GeRandomtOffset())
+			for spawnedAgent in spawnedAgents:
+				agent.AddFollower(spawnedAgent)
+			nbSpawned += spawnedAgents.size()
+
+	return nbSpawned > 0

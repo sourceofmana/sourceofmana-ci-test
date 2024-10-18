@@ -11,7 +11,7 @@ static func GetMapFromAgent(agent : BaseAgent) -> WorldMap:
 	var map : WorldMap = null
 	var inst : WorldInstance = GetInstanceFromAgent(agent)
 	if inst:
-		Util.Assert(inst.map != null, "Agent's base map is incorrect, instance is not referenced inside a map")
+		assert(inst.map != null, "Agent's base map is incorrect, instance is not referenced inside a map")
 		map = inst.map
 	return map
 
@@ -32,24 +32,26 @@ static func GetAgent(agentID : int) -> BaseAgent:
 	return agent
 
 static func AddAgent(agent : BaseAgent):
-	Util.Assert(agent != null, "Agent is null, can't add it")
+	assert(agent != null, "Agent is null, can't add it")
 	if agent and not agents.has(agent.get_rid().get_id()):
 		agents[agent.get_rid().get_id()] = agent
 
 static func RemoveAgent(agent : BaseAgent):
-	Util.Assert(agent != null, "Agent is null, can't remove it")
+	assert(agent != null, "Agent is null, can't remove it")
 	if agent:
 		var inst : WorldInstance = agent.get_parent()
-		if inst and agent.spawnInfo and agent.spawnInfo.is_persistant:
-			Callback.SelfDestructTimer(inst, agent.spawnInfo.respawn_delay, WorldAgent.CreateAgent, [agent.spawnInfo, inst.id])
+		if inst and inst.timers and agent.spawnInfo and agent.spawnInfo.is_persistant:
+			Callback.SelfDestructTimer(inst.timers, agent.spawnInfo.respawn_delay, WorldAgent.CreateAgent, [agent.spawnInfo, inst.id])
 
+		if agent is AIAgent and agent.leader != null:
+			agent.leader.RemoveFollower(agent)
 		PopAgent(agent)
 		agents.erase(agent)
 		agent.queue_free()
 
 static func HasAgent(inst : WorldInstance, agent : BaseAgent):
 	var hasAgent : bool = false
-	Util.Assert(agent != null and inst != null, "Agent or instance are invalid, could not check if the agent is inside the instance")
+	assert(agent != null and inst != null, "Agent or instance are invalid, could not check if the agent is inside the instance")
 	if agent and inst:
 		if agent is PlayerAgent:
 			hasAgent = inst.players.has(agent)
@@ -60,7 +62,7 @@ static func HasAgent(inst : WorldInstance, agent : BaseAgent):
 	return hasAgent
 
 static func PopAgent(agent : BaseAgent):
-	Util.Assert(agent != null, "Agent is null, can't pop it")
+	assert(agent != null, "Agent is null, can't pop it")
 	if agent:
 		var inst : WorldInstance = GetInstanceFromAgent(agent)
 		Launcher.Network.Server.NotifyNeighbours(agent, "RemoveEntity", [], false)
@@ -76,15 +78,13 @@ static func PopAgent(agent : BaseAgent):
 			inst.remove_child(agent)
 
 static func PushAgent(agent : BaseAgent, inst : WorldInstance):
-	Util.Assert(agent != null, "Agent is null, can't push it")
-	Util.Assert(inst != null, "Instance is null, can't push the agent in it")		
+	assert(agent != null, "Agent is null, can't push it")
+	assert(inst != null, "Instance is null, can't push the agent in it")		
 	if agent and inst:
 		if not HasAgent(inst, agent):
 			if agent is PlayerAgent:
-				var prevPlayerCount : int = inst.players.size()
 				inst.players.push_back(agent)
-				if prevPlayerCount == 0:
-					inst.RefreshProcessMode()
+				inst.RefreshProcessMode()
 			elif agent is MonsterAgent:
 				inst.mobs.push_back(agent)
 			elif agent is NpcAgent:
@@ -96,19 +96,12 @@ static func PushAgent(agent : BaseAgent, inst : WorldInstance):
 
 static func CreateAgent(spawn : SpawnObject, instanceID : int = 0, nickname : String = "") -> BaseAgent:
 	var data : EntityData = Instantiate.FindEntityReference(spawn.name)
-	Util.Assert(data != null, "Could not create the actor: %s" % spawn.name)
 	if not data:
 		return
 
-	var position : Vector2 = WorldNavigation.GetSpawnPosition(spawn.map, spawn, !(data._behaviour & AICommons.Behaviour.IMMOBILE))
-	if Vector2i(position) == Vector2i.ZERO:
-		return null
-
-	var agent : BaseAgent = Instantiate.CreateAgent(spawn.type, spawn.name, nickname, spawn.player_script, spawn.own_script)
-	agent.spawnInfo = spawn
-	agent.position = position
-
-	AddAgent(agent)
-	Launcher.World.Spawn(spawn.map, agent, instanceID)
+	var agent : BaseAgent = Instantiate.CreateAgent(spawn, data, spawn.nick if nickname.length() == 0 else nickname)
+	if agent:
+		AddAgent(agent)
+		Launcher.World.Spawn(spawn.map, agent, instanceID)
 
 	return agent

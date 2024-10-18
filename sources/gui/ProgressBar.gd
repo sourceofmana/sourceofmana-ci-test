@@ -32,38 +32,11 @@ func GetRatio(currentValue : float, maxValue : float) -> float:
 		ratio = currentValue / maxValue * 100.0
 	return ratio
 
-func GetFormatedText(value : String) -> String:
-	var commaLocation : int = value.find(".")
-	var charCounter : int = 0
-
-	if commaLocation > 0:
-		charCounter = commaLocation - 3
-	else:
-		charCounter = value.length() - 3
-
-	while charCounter > 0:
-		value = value.insert(charCounter, ",")
-		charCounter = charCounter - 3
-
-	commaLocation = value.find(".")
-	if commaLocation == -1:
-		commaLocation = value.length()
-		if numberAfterComma > 0:
-			value += "."
-
-	if numberAfterComma > 0:
-		for i in range(value.length() - 1, commaLocation + numberAfterComma):
-			value += "0"
-	else:
-		value = value.substr(0, commaLocation)
-
-	return value
-
 func GetBarFormat(currentValue : float, maxValue : float) -> String:
-	var formatedText : String = GetFormatedText("%.2f" % ((currentValue / maxValue * 100.0) if displayRatio else currentValue))
+	var formatedText : String = Util.GetFormatedText("%.2f" % ((currentValue / maxValue * 100.0) if displayRatio else currentValue), numberAfterComma)
 
 	if displayMax:
-		var maxValueText : String = GetFormatedText(String.num(maxValue))
+		var maxValueText : String = Util.GetFormatedText(String.num(maxValue), numberAfterComma)
 		formatedText += " / " + maxValueText
 
 	if labelUnit.length() > 0.0:
@@ -73,7 +46,7 @@ func GetBarFormat(currentValue : float, maxValue : float) -> String:
 
 #
 func SetStat(newValue : float, maxValue : float):
-	Util.Assert(bar != null && label != null, "ProgressBar childs are missing")
+	assert(bar != null && label != null, "ProgressBar childs are missing")
 	if valueTo != newValue || valueMax != maxValue:
 		var previousValue : float = valueTo
 
@@ -94,7 +67,7 @@ func SetStat(newValue : float, maxValue : float):
 
 #
 func _ready():
-	Util.Assert(bar != null, "ProgressBar bar child is missing")
+	assert(bar != null, "ProgressBar bar child is missing")
 	if bar:
 		bar.fill_mode = fillMode
 		if textureProgress:
@@ -104,7 +77,7 @@ func _ready():
 		if textureBackground:
 			bar.texture_under = textureBackground
 
-	Util.Assert(label != null, "ProgressBar label child is missing")
+	assert(label != null, "ProgressBar label child is missing")
 	if label:
 		if labelScale != 1:
 			label.set_scale(Vector2(labelScale,labelScale))

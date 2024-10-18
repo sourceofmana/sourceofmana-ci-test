@@ -34,6 +34,7 @@ func ResetSteps():
 			currentStep = (1 - (currentStep - displayStep) / fadeOutDelay) * fadeInStep
 		else:
 			currentStep = 0.0
+	_process(0) # Force refresh
 
 func Push(data : ContextData):
 	buffer.push_back(data)
@@ -44,6 +45,7 @@ func FadeIn(disableAction : bool = false):
 	FlushDataBuffer()
 
 	canFadeOut = not persistant
+	_process(0)
 
 func FadeOut():
 	if currentStep < fadeInStep:
@@ -55,6 +57,7 @@ func FadeOut():
 		currentStep = displayStep
 
 	canFadeOut = true
+	_process(0)
 
 func Show(disableAction):
 	visible = true

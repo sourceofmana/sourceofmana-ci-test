@@ -1073,7 +1073,7 @@
    </properties>
    <polygon points="0,32 32,0 64,32 80,64 56,80 9,80 -16,64"/>
   </object>
-  <object id="38" name="Dorian" type="Spawn" x="-200" y="120" width="32" height="32">
+  <object id="38" name="Salt Slime" type="Spawn" x="-200" y="120" width="32" height="32">
    <properties>
     <property name="count" type="int" value="60"/>
     <property name="name" value="Salt Slime"/>
@@ -1084,7 +1084,7 @@
    <properties>
     <property name="count" type="int" value="1"/>
     <property name="name" value="Locks"/>
-    <property name="player_script" value="Locks.gd"/>
+    <property name="player_script" value="splatyna/Locks.gd"/>
     <property name="type" value="Npc"/>
    </properties>
   </object>

@@ -14,7 +14,7 @@ static func PlugCallback(objectSignal : Signal, callback : Callable, args : Arra
 	AddCallback(objectSignal, callback, args)
 
 static func ShootCallback(args : Array):
-	if args.size() > 0:
+	if args.size() > 0 and args[0] is Callable:
 		TriggerCallback(args.pop_front(), args)
 
 static func TriggerCallback(callback : Callable, args : Array = []):
@@ -28,10 +28,11 @@ static func TriggerCallback(callback : Callable, args : Array = []):
 static func OneShotCallback(objectSignal : Signal, callback : Callable, args : Array = []):
 	PlugCallback(objectSignal, Callback.ShootCallback, [callback] + args)
 
+static func ClearOneShot(objectSignal : Signal):
+	RemoveCallback(objectSignal, Callback.ShootCallback)
+
 #
 static func SelfDestructCallback(parent : Node, timer : Timer, callback : Callable, args : Array = []):
-	if parent is WorldInstance:
-		pass
 	if parent:
 		parent.remove_child(timer)
 		timer.queue_free()
@@ -79,7 +80,8 @@ static func StartTimer(timer : Timer, delay : float, callback : Callable, oneSho
 			PlugCallback(timer.timeout, callback)
 
 static func LoopTimer(timer : Timer, delay : float):
-	Util.Assert(delay > 0, "Delay should never be null, infinite loop can happen on looped timers")
+	assert(delay > 0, "Delay should never be null, infinite loop can happen on looped timers")
+	assert(timer and not timer.timeout.get_connections().is_empty(), "Impossible to loop over an invalid timer or a missing timeout callback")
 	if timer and delay > 0:
 		timer.start(delay)
 

@@ -10,9 +10,11 @@ extends ServiceBase
 @onready var sticks : Container					= $Overlay/Sections/Shortcuts/Sticks
 @onready var boxes : Control					= $Overlay/Sections/Shortcuts/Boxes
 
-@onready var notificationLabel : RichTextLabel	= $Overlay/Sections/Notification
-@onready var dialogueWindow : PanelContainer	= $Overlay/Sections/Contexts/VBox/BottomVbox/Dialogue
-@onready var choiceContext : ContextMenu		= $Overlay/Sections/Contexts/VBox/BottomVbox/ChoiceVbox/Choice
+@onready var notificationLabel : RichTextLabel	= $Overlay/Sections/Indicators/Info/Notification
+@onready var pickupPanel : PanelContainer		= $Overlay/Sections/Indicators/Info/PickUp
+@onready var loadingControl : Control			= $Overlay/Sections/Contexts/Loading
+@onready var dialogueWindow : VBoxContainer		= $Overlay/Sections/Contexts/Dialogue
+@onready var choiceContext : ContextMenu		= $Overlay/Sections/Contexts/Dialogue/BottomVbox/ChoiceVbox/Choice
 @onready var infoContext : ContextMenu			= $Overlay/Sections/Contexts/Info
 
 # Windows
@@ -36,6 +38,9 @@ extends ServiceBase
 # Shaders
 @onready var CRTShader : TextureRect			= $Shaders/CRT
 @onready var HQ4xShader : TextureRect			= $Shaders/HQ4x
+
+# State transition
+var progressTimer : Timer						= null
 
 #
 func CloseWindow():
@@ -71,6 +76,8 @@ func EnterLoginMenu():
 
 	dialogueWindow.set_visible(false)
 	notificationLabel.set_visible(false)
+	pickupPanel.set_visible(false)
+	loadingControl.set_visible(false)
 	menu.set_visible(false)
 	shortcuts.set_visible(false)
 	quitWindow.set_visible(false)
@@ -80,27 +87,50 @@ func EnterLoginMenu():
 	newsWindow.EnableControl(true)
 	loginWindow.EnableControl(true)
 
+func EnterLoginProgress():
+	newsWindow.EnableControl(false)
+	loginWindow.EnableControl(false)
+
+	progressTimer = Callback.SelfDestructTimer(self, NetworkCommons.LoginAttemptTimeout, Launcher.Network.Client.NetworkIssue, [], "ProgressTimer")
+	loadingControl.set_visible(true)
+
+func EnterCharMenu():
+	progressTimer.stop()
+	progressTimer = null
+	loadingControl.set_visible(false)
+	Launcher.FSM.EnterState(Launcher.FSM.States.CHAR_PROGRESS)
+
+func EnterCharProgress():
+	Launcher.Network.ConnectPlayer(Launcher.FSM.playerName)
+	progressTimer = Callback.SelfDestructTimer(self, NetworkCommons.CharSelectionTimeout, Launcher.Network.Client.NetworkIssue, [], "ProgressTimer")
+	loadingControl.set_visible(true)
+
 func EnterGame():
-	if Launcher.Player:
-		infoContext.Clear()
-		infoContext.Push(ContextData.new("gp_interact"))
-		infoContext.Push(ContextData.new("gp_untarget"))
-		infoContext.Push(ContextData.new("gp_morph"))
-		infoContext.Push(ContextData.new("gp_sit"))
-		infoContext.FadeIn()
+	progressTimer.stop()
+	progressTimer = null
+	loadingControl.set_visible(false)
 
-		background.set_visible(false)
-		loginWindow.EnableControl(false)
-		newsWindow.EnableControl(false)
+	infoContext.Clear()
+	infoContext.Push(ContextData.new("gp_interact"))
+	infoContext.Push(ContextData.new("gp_untarget"))
+	infoContext.Push(ContextData.new("gp_morph"))
+	infoContext.Push(ContextData.new("gp_sit"))
+	infoContext.Push(ContextData.new("gp_target"))
+	infoContext.Push(ContextData.new("gp_pickup"))
+	infoContext.FadeIn()
 
-		stats.set_visible(true)
-		menu.set_visible(true)
-		shortcuts.set_visible(true)
-		notificationLabel.set_visible(true)
+	background.set_visible(false)
+	loginWindow.EnableControl(false)
+	newsWindow.EnableControl(false)
 
-		menu.SetItemsVisible(true)
-		stats.Init()
-		statWindow.Init(Launcher.Player)
+	stats.set_visible(true)
+	menu.set_visible(true)
+	shortcuts.set_visible(true)
+	notificationLabel.set_visible(true)
+
+	menu.SetItemsVisible(true)
+	stats.Init()
+	statWindow.Init(Launcher.Player)
 
 #
 func _post_launch():
@@ -109,8 +139,12 @@ func _post_launch():
 
 	if Launcher.FSM:
 		Launcher.FSM.enter_login.connect(EnterLoginMenu)
+		Launcher.FSM.enter_login_progress.connect(EnterLoginProgress)
+		Launcher.FSM.enter_char.connect(EnterCharMenu)
+		Launcher.FSM.enter_char_progress.connect(EnterCharProgress)
 		Launcher.FSM.enter_game.connect(EnterGame)
 
+	Launcher.FSM.EnterState(Launcher.FSM.States.LOGIN_SCREEN)
 	isInitialized = true
 
 func _notification(notif):
@@ -126,7 +160,7 @@ func _notification(notif):
 			Launcher.Action.Enable(true)
 
 func _ready():
-	Util.Assert(CRTShader.material != null, "CRT Shader can't load as its texture material is missing")
+	assert(CRTShader.material != null, "CRT Shader can't load as its texture material is missing")
 	CRTShader.material.set_shader_parameter("resolution", get_viewport().size / 2)
 
 func _on_ui_margin_resized():

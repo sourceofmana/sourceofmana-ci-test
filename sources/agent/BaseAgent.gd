@@ -2,16 +2,15 @@ extends Actor
 class_name BaseAgent
 
 #
+signal agent_killed
+
+#
 var agent : NavigationAgent2D			= null
 var entityRadius : int					= 0
 
-var behaviour : int						= AICommons.Behaviour.NONE
-var aiState : AICommons.State			= AICommons.State.IDLE
-var aiTimer : Timer						= null
 var actionTimer : Timer					= null
 var regenTimer : Timer					= null
 var cooldownTimers : Dictionary			= {}
-var attackers : Array					= []
 
 var hasCurrentGoal : bool				= false
 var isRelativeMode : bool				= false
@@ -29,8 +28,6 @@ var skillSet : Array[SkillCell]			= []
 var skillProba : Dictionary				= {}
 var skillProbaSum : float				= 0.0
 var skillSelected : SkillCell			= null
-
-const inputApproximationUnit : int		= 12
 
 #
 func SwitchInputMode(clearCurrentInput : bool):
@@ -52,8 +49,8 @@ func UpdateInput():
 
 	if hasCurrentGoal:
 		if agent && not agent.is_navigation_finished():
-			var clampedDirection : Vector2 = Vector2(global_position.direction_to(agent.get_next_path_position()).normalized() * inputApproximationUnit)
-			currentInput = Vector2(clampedDirection) / inputApproximationUnit
+			var clampedDirection : Vector2 = Vector2(global_position.direction_to(agent.get_next_path_position()).normalized() * ActorCommons.InputApproximationUnit)
+			currentInput = Vector2(clampedDirection) / ActorCommons.InputApproximationUnit
 
 			lastPositions.push_back(agent.distance_to_target())
 			if lastPositions.size() > 5:
@@ -143,11 +140,11 @@ func UpdateChanged():
 	forceUpdate = false
 	if currentInput != Vector2.ZERO:
 		currentOrientation = Vector2(currentVelocity).normalized()
-	var functionName : String = "ForceUpdateEntity" if velocity == Vector2.ZERO else "UpdateEntity"
+	var functionName : String = "ForceUpdateEntity" if velocity.is_zero_approx() else "UpdateEntity"
 	Launcher.Network.Server.NotifyNeighbours(self, functionName, [velocity, position, currentOrientation, state, currentSkillID])
 
 #
-func SetData(data : EntityData):
+func SetData():
 	for skillID in data._skillSet:
 		AddSkill(DB.SkillsDB[skillID], data._skillProba[skillID])
 
@@ -155,16 +152,16 @@ func SetData(data : EntityData):
 		AddItem(DB.ItemsDB[itemID], data._dropsProba[itemID])
 
 	entityRadius = data._radius
-	behaviour = data._behaviour
 
 	# Navigation
-	if !(behaviour & AICommons.Behaviour.IMMOBILE):
+	if !(data._behaviour & AICommons.Behaviour.IMMOBILE):
 		if self is PlayerAgent:
 			agent = FileSystem.LoadEntityComponent("navigations/PlayerAgent")
 		else:
 			agent = FileSystem.LoadEntityComponent("navigations/NPAgent")
 		agent.set_radius(data._radius)
 		agent.set_neighbor_distance(data._radius * 2)
+		agent.set_avoidance_priority(clampf(data._radius / float(ActorCommons.MaxEntityRadiusSize), 0.0, 1.0))
 		agent.velocity_computed.connect(self._velocity_computed)
 		add_child.call_deferred(agent)
 
@@ -181,50 +178,8 @@ func GetNextShapeID() -> String:
 func GetNextPortShapeID() -> String:
 	return stat.spiritShape if stat.IsSailing() else "Ship"
 
-#
-func AddAttacker(attacker : BaseAgent, damage : int = 0):
-	if attacker:
-		var currentTick : int = Time.get_ticks_msec()
-		for entry in attackers:
-			if entry.attacker == attacker:
-				entry.damage += damage
-				entry.time = currentTick
-				return
-
-		attackers.append({"attacker": attacker, "damage": damage, "time": currentTick})
-		if attackers.size() > AICommons.maxAttackerCount:
-			RemoveOldestAttacker()
-
-func RemoveOldestAttacker():
-	attackers.sort_custom(func(a, b): return a.time < b.time)
-	attackers.erase(0)
-
-func GetMostValuableAttacker() -> BaseAgent:
-	var target : BaseAgent = null
-	var maxDamage : int = -1
-	for entry in attackers:
-		if SkillCommons.IsInteractable(self, entry.attacker) and entry.damage > maxDamage:
-			maxDamage = entry.damage
-			target = entry.attacker
-	return target
-
-func GetNearbyMostValuableAttacker() -> BaseAgent:
-	var target : BaseAgent = null
-	var maxDamage : int = -1
-	for entry in attackers:
-		if entry.attacker and AICommons.IsReachable(self, entry.attacker) and entry.damage > maxDamage:
-			maxDamage = entry.damage
-			target = entry.attacker
-	return target
-
-func GetDamageRatio(attacker : BaseAgent) -> float:
-	for entry in attackers:
-		if entry.attacker == attacker:
-			if entry.time > Time.get_ticks_msec() - ActorCommons.AttackTimestampLimit and stat.current.maxHealth > 0:
-				return float(entry.damage) / float(stat.current.maxHealth) if entry.damage < stat.current.maxHealth else 1.0
-	return 0.0
-
 func Killed():
+	agent_killed.emit(self)
 	SetSkillCastID(DB.UnknownHash)
 
 #
@@ -232,18 +187,16 @@ func _physics_process(_delta):
 	if agent:
 		UpdateInput()
 
-		if agent.get_avoidance_enabled():
-			agent.set_velocity(currentVelocity)
-		else:
-			_velocity_computed(currentVelocity)
+	if agent and agent.get_avoidance_enabled():
+		agent.set_velocity(currentVelocity)
 	else:
-		if forceUpdate:
-			UpdateChanged()
+		_velocity_computed(currentVelocity)
 
 func _velocity_computed(safeVelocity : Vector2i):
 	currentVelocity = safeVelocity
 	SetCurrentState()
-	SetVelocity()
+	if currentVelocity != Vector2i.ZERO or not velocity.is_zero_approx():
+		SetVelocity()
 
 	if forceUpdate:
 		UpdateChanged()

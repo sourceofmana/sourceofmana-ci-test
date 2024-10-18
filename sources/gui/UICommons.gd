@@ -5,10 +5,23 @@ class_name UICommons
 const LightTextColor : Color 						= Color("FFFFDD")
 const TextColor : Color 							= Color("EED8A1")
 const DarkTextColor : Color							= Color("C19747")
+const WarnTextColor : Color							= Color("F0846A")
 
 const ContextAction : PackedScene					= preload("res://presets/gui/contexts/ContextAction.tscn")
+const CellTilePreset : PackedScene					= preload("res://presets/gui/CellTile.tscn")
+
+const DelayPickUpNotification : float				= 5.0 * 1000.0
+
+const DialogueTextSpeed : float						= 0.02
 
 #
+enum Way
+{
+	HIDE = -1,
+	KEEP = 0,
+	SHOW = 1,
+}
+
 static func ColorToHSVA(color : Color) -> Vector4:
 	var maxc : float = max(color.r, max(color.g, color.b))
 	var minc : float = min(color.r, min(color.g, color.b))
