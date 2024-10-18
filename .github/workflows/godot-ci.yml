@@ -73,6 +73,9 @@ jobs:
           mkdir -v -p ~/.config/
           echo "$DEBUG_KEYSTORE" | base64 -d > $HOME/debug_keystore
           ls -l /root/.config/godot
+          cat /root/.config/godot/editor_settings-4.3.tres
+          echo "separator"
+          cat /root/.config/godot/editor_settings-4.tres
           cp -r /root/.config/godot ~/.config/godot
           cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
         env:
