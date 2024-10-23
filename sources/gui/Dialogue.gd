@@ -13,18 +13,27 @@ const NPCNameLabel : PackedScene		= preload("res://presets/gui/labels/NpcNameLab
 const PlayerDialogueLabel : PackedScene	= preload("res://presets/gui/labels/PlayerDialogueLabel.tscn")
 
 #
+func Toggle(toggle : bool):
+	if toggle:
+		Launcher.GUI.DisplayInfoContext(["ui_accept", "ui_cancel"])
+		Launcher.GUI.dialogueWindow.Clear()
+	else:
+		Launcher.GUI.infoContext.FadeOut()
+
+	Launcher.GUI.dialogueContainer.set_visible(toggle)
+
 func AddName(text : String):
 	if lastName != text:
 		lastName = text
 		var label : RichTextLabel = PlayerNameLabel.instantiate() if lastName == Launcher.Player.nick else NPCNameLabel.instantiate()
 		label.text = "[color=#" + UICommons.LightTextColor.to_html(false) + "]" + lastName + "[/color]"
-		scrollable.textContainer.add_child(label)
+		scrollable.textContainer.add_child.call_deferred(label)
 
 func AddDialogue(text : String):
 	var isPlayer : bool = lastName == Launcher.Player.nick
 	var label : RichTextLabel = PlayerDialogueLabel.instantiate() if isPlayer else Scrollable.contentLabel.instantiate()
 	label.text = "[color=#" + UICommons.TextColor.to_html(false) + "]" + text + "[/color]"
-	scrollable.textContainer.add_child(label)
+	scrollable.textContainer.add_child.call_deferred(label)
 
 	if not isPlayer:
 		var textSize : int = label.text.length()
@@ -55,7 +64,7 @@ func ButtonPressed():
 	if Launcher.Player:
 		Launcher.Network.TriggerNextContext()
 	if buttonLabel.text == "Close":
-		set_visible(false)
+		Launcher.GUI.dialogueContainer.set_visible(false)
 
 func Clear():
 	scrollable.Clear()
@@ -83,7 +92,7 @@ func _ready():
 	scrollbar.changed.connect(AutoScroll)
 
 func _input(event : InputEvent):
-	if is_visible() and not Launcher.GUI.choiceContext.is_visible():
+	if Launcher.GUI.dialogueContainer.is_visible() and not Launcher.GUI.choiceContext.is_visible():
 		if Launcher.Action.TryJustPressed(event, "ui_accept", true):
 			ButtonPressed()
 		if Launcher.Action.TryJustPressed(event, "ui_cancel", true):

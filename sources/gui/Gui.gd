@@ -14,6 +14,7 @@ extends ServiceBase
 @onready var pickupPanel : PanelContainer		= $Overlay/Sections/Indicators/Info/PickUp
 @onready var loadingControl : Control			= $Overlay/Sections/Contexts/Loading
 @onready var dialogueWindow : VBoxContainer		= $Overlay/Sections/Contexts/Dialogue
+@onready var dialogueContainer : PanelContainer	= $Overlay/Sections/Contexts/Dialogue/BottomVbox/Dialogue
 @onready var choiceContext : ContextMenu		= $Overlay/Sections/Contexts/Dialogue/BottomVbox/ChoiceVbox/Choice
 @onready var infoContext : ContextMenu			= $Overlay/Sections/Contexts/Info
 
@@ -66,6 +67,13 @@ func ToggleChatNewLine():
 			ToggleControl(chatWindow)
 		chatContainer.SetNewLineEnabled(true)
 
+func DisplayInfoContext(actions : PackedStringArray):
+	infoContext.Clear()
+	for action in actions:
+		if DeviceManager.HasActionName(action):
+			infoContext.Push(ContextData.new(action))
+	infoContext.FadeIn()
+
 #
 func EnterLoginMenu():
 	infoContext.set_visible(false)
@@ -74,7 +82,7 @@ func EnterLoginMenu():
 	stats.set_visible(false)
 	statWindow.set_visible(false)
 
-	dialogueWindow.set_visible(false)
+	dialogueContainer.set_visible(false)
 	notificationLabel.set_visible(false)
 	pickupPanel.set_visible(false)
 	loadingControl.set_visible(false)
@@ -109,15 +117,7 @@ func EnterGame():
 	progressTimer.stop()
 	progressTimer = null
 	loadingControl.set_visible(false)
-
-	infoContext.Clear()
-	infoContext.Push(ContextData.new("gp_interact"))
-	infoContext.Push(ContextData.new("gp_untarget"))
-	infoContext.Push(ContextData.new("gp_morph"))
-	infoContext.Push(ContextData.new("gp_sit"))
-	infoContext.Push(ContextData.new("gp_target"))
-	infoContext.Push(ContextData.new("gp_pickup"))
-	infoContext.FadeIn()
+	DisplayInfoContext(["gp_interact", "gp_untarget", "gp_morph", "gp_sit", "gp_target", "gp_pickup"])
 
 	background.set_visible(false)
 	loginWindow.EnableControl(false)

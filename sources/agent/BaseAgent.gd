@@ -64,6 +64,9 @@ func UpdateInput():
 		currentVelocity = Vector2i.ZERO
 
 func SetVelocity():
+	if currentVelocity == Vector2i.ZERO and velocity.is_zero_approx():
+		return
+
 	var nextVelocity : Vector2 = Vector2.ZERO
 	if state == ActorCommons.State.WALK:
 		nextVelocity = currentVelocity
@@ -132,6 +135,13 @@ func WalkToward(pos : Vector2):
 	if agent:
 		agent.target_position = pos
 
+func LookAt(target : BaseAgent):
+	if target:
+		var newOrientation : Vector2 = Vector2(target.position - position).normalized()
+		if not newOrientation.is_equal_approx(currentDirection):
+			currentOrientation = newOrientation
+			forceUpdate = true
+
 func ResetNav():
 	WalkToward(position)
 	SwitchInputMode(true)
@@ -184,22 +194,26 @@ func Killed():
 
 #
 func _physics_process(_delta):
-	if agent:
-		UpdateInput()
+	# If avoidance is enabled, first set the last calculed velocity as we need
+	# to run move_and_slide() in the physics thread only.
+	if agent and agent.get_avoidance_enabled():
+		SetVelocity()
 
+	UpdateInput()
+	# Then update input and defer the next velocity calculus.
 	if agent and agent.get_avoidance_enabled():
 		agent.set_velocity(currentVelocity)
+	# If avoidance is not enabled, just process the callback directly.
 	else:
 		_velocity_computed(currentVelocity)
-
-func _velocity_computed(safeVelocity : Vector2i):
-	currentVelocity = safeVelocity
-	SetCurrentState()
-	if currentVelocity != Vector2i.ZERO or not velocity.is_zero_approx():
 		SetVelocity()
 
 	if forceUpdate:
 		UpdateChanged()
+
+func _velocity_computed(safeVelocity : Vector2i):
+	currentVelocity = safeVelocity
+	SetCurrentState()
 
 func _ready():
 	set_name.call_deferred(str(get_rid().get_id()))
