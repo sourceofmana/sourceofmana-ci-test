@@ -9,13 +9,28 @@ Mail: team [at] sourceofmana.org
 
 The MIT License (MIT)
 
-Copyright 2022-2023 Source of Mana
+Copyright (c) 2022-present Source of Mana contributors.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+-- Mana Team <https://manasource.org>
+
+------------------------------------------------------------------------
+
+Copyright (c) 2014-present Godot Engine contributors.
+Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+-- Godot Engine <https://godotengine.org>
 
 ------------------------------------------------------------------------
 
@@ -180,6 +195,10 @@ You must include a link to https://gitlab.com/sourceofmana in your credits along
 ./graphics/sprites/equipments/chests/vneckjumper-male.png [Saphy]
 ./graphics/sprites/equipments/legs/trousers-male.png [Reid]
 ./graphics/sprites/equipments/legs/trousers-female.png [Reid]
+./graphics/sprites/monsters/bald.png [Reid]
+./graphics/sprites/monsters/bun.png [Slave]
+./graphics/sprites/monsters/center-parting.png [Kineticstorm]
+./graphics/sprites/monsters/emo.png [Kineticstorm]
 ./graphics/sprites/monsters/bat.png [Bagzie]
 ./graphics/sprites/monsters/bigpiou.png [Hocus]
 ./graphics/sprites/monsters/croc.png [Reid] [Coolkid782, Enchilado]
@@ -198,7 +217,7 @@ You must include a link to https://gitlab.com/sourceofmana in your credits along
 ./graphics/sprites/monsters/slime-sludge.png [Neorice] [Reid]
 ./graphics/sprites/monsters/turtle.png [Coolkid782] [Reid]
 ./graphics/sprites/npcs/cave-locks.png [Reid]
-./graphics/sprites/npcs/razor.png [Reid]
+./graphics/sprites/npcs/gabz.png [Reid]
 ./graphics/sprites/npcs/large-chest.png [Reid]
 ./graphics/sprites/players/human-female.png [Talaroc] [Modanung, Saphy, Reid]
 ./graphics/sprites/players/human-female-b.png [Talaroc] [Modanung, Saphy, Reid]
@@ -304,8 +323,10 @@ You must include a link to https://gitlab.com/sourceofmana in your credits along
 ./maps/splatyna/splatyna-third.tmx [Reid]
 ./maps/sewer/artis-sewer.tmx [Reid]
 ./musics/Bart Kelsey - The Adventure Begins.ogg [BartK]
+./musics/Bart Kelsey - In the forest of the birches.ogg [BartK]
 ./musics/Jose. S & Dakota. D - Lenia.ogg [Chicka-Maria]
 ./musics/Jose. S & Dakota. D - Night is calling.ogg [Chicka-Maria]
+./musics/Hitctrl - Foreboding ambiance.ogg [Hitctrl]
 ./press/logo/logo_bw.svg [Kolokolna] [Reid]
 ./press/logo/logo_colored.svg [Kolokolna] [Reid]
 ./press/logo/logo_seed.svg [Kolokolna] [Reid]

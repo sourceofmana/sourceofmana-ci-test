@@ -3,6 +3,7 @@
  <properties>
   <property name="license" value="CC BY-SA 4.0"/>
   <property name="lighting" type="float" value="0.5"/>
+  <property name="music" value="LaJohanne"/>
   <property name="name" value="Hold"/>
  </properties>
  <tileset firstgid="1" source="../../graphics/tilesets/generic/ship/indoor/Indoor.tsx"/>
@@ -347,8 +348,8 @@
   <object id="1" name="To Second Deck" type="Warp" x="1536" y="928">
    <properties>
     <property name="dest_map" value="Ship Second Deck"/>
-    <property name="dest_pos_x" type="int" value="61"/>
-    <property name="dest_pos_y" type="int" value="34"/>
+    <property name="dest_pos_x" type="int" value="72"/>
+    <property name="dest_pos_y" type="int" value="37"/>
    </properties>
    <polygon points="0,0 0,32 32,32 32,0"/>
   </object>
