@@ -3,7 +3,12 @@ android/*
 binary/*
 build/*
 publishing/*
+
+# imported files
 .godot/*
+*.tmx.client.scn*
+*.tmx.navigation.tres*
+*.tmx.server.scn*
 
 # linux env
 .mono
