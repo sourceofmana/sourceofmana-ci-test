@@ -50,13 +50,15 @@ func LaunchMode(isClient : bool = false, isServer : bool = false):
 	if isServer:
 		if not isClient:
 			Scene.queue_free()
+			Scene = null
 			FSM.queue_free()
+			FSM = null
 			Action.queue_free()
+			Action = null
 			Audio.queue_free()
+			Audio = null
 			var label = FileSystem.LoadGui("Server")
 			add_child.call_deferred(label)
-
-		Network.NetCreate()
 
 func LaunchClient():
 	if OS.is_debug_build():
@@ -81,13 +83,14 @@ func LauncherReset():
 		Map.queue_free()
 		Map = null
 	if Camera:
+		Camera.Destroy()
 		Camera.queue_free()
 		Camera = null
 	if Player:
 		Player.queue_free()
 		Player = null
 	if World:
-		World.DestroyAreas()
+		World.Destroy()
 		World.queue_free()
 		World = null
 	if SQL:
@@ -133,4 +136,5 @@ func _post_launch():
 	if Audio:									Audio._post_launch()
 
 func _quit():
+	LauncherReset()
 	get_tree().quit()

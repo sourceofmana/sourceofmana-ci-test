@@ -106,6 +106,9 @@ func _physics_process(_deltaTime : float):
 
 #
 func _input(event):
+	if Launcher.Player == null or Launcher.Map == null or Launcher.GUI == null or Launcher.Network == null:
+		return
+
 	if event.is_pressed():
 		if event is InputEventJoypadButton and DeviceManager.currentDeviceType != DeviceManager.DeviceType.JOYSTICK:
 			DeviceManager.DeviceChanged(DeviceManager.DeviceType.JOYSTICK)
@@ -134,16 +137,16 @@ func _input(event):
 	elif TryJustPressed(event, "gp_untarget"):		Launcher.Player.ClearTarget()
 	elif TryJustPressed(event, "gp_interact"):		Launcher.Player.JustInteract()
 	elif TryPressed(event, "gp_interact"):			Launcher.Player.Interact()
-	elif TryJustPressed(event, "gp_shortcut_1"):	Launcher.GUI.boxes.Trigger(0)
-	elif TryJustPressed(event, "gp_shortcut_2"):	Launcher.GUI.boxes.Trigger(1)
-	elif TryJustPressed(event, "gp_shortcut_3"):	Launcher.GUI.boxes.Trigger(2)
-	elif TryJustPressed(event, "gp_shortcut_4"):	Launcher.GUI.boxes.Trigger(3)
-	elif TryJustPressed(event, "gp_shortcut_5"):	Launcher.GUI.boxes.Trigger(4)
-	elif TryJustPressed(event, "gp_shortcut_6"):	Launcher.GUI.boxes.Trigger(5)
-	elif TryJustPressed(event, "gp_shortcut_7"):	Launcher.GUI.boxes.Trigger(6)
-	elif TryJustPressed(event, "gp_shortcut_8"):	Launcher.GUI.boxes.Trigger(7)
-	elif TryJustPressed(event, "gp_shortcut_9"):	Launcher.GUI.boxes.Trigger(8)
-	elif TryJustPressed(event, "gp_shortcut_10"):	Launcher.GUI.boxes.Trigger(9)
+	elif TryJustPressed(event, "gp_shortcut_1"):	Launcher.GUI.actionBoxes.Trigger(0)
+	elif TryJustPressed(event, "gp_shortcut_2"):	Launcher.GUI.actionBoxes.Trigger(1)
+	elif TryJustPressed(event, "gp_shortcut_3"):	Launcher.GUI.actionBoxes.Trigger(2)
+	elif TryJustPressed(event, "gp_shortcut_4"):	Launcher.GUI.actionBoxes.Trigger(3)
+	elif TryJustPressed(event, "gp_shortcut_5"):	Launcher.GUI.actionBoxes.Trigger(4)
+	elif TryJustPressed(event, "gp_shortcut_6"):	Launcher.GUI.actionBoxes.Trigger(5)
+	elif TryJustPressed(event, "gp_shortcut_7"):	Launcher.GUI.actionBoxes.Trigger(6)
+	elif TryJustPressed(event, "gp_shortcut_8"):	Launcher.GUI.actionBoxes.Trigger(7)
+	elif TryJustPressed(event, "gp_shortcut_9"):	Launcher.GUI.actionBoxes.Trigger(8)
+	elif TryJustPressed(event, "gp_shortcut_10"):	Launcher.GUI.actionBoxes.Trigger(9)
 	elif TryJustPressed(event, "gp_pickup"):		Launcher.Map.PickupNearestDrop()
 	elif TryJustPressed(event, "gp_morph"):	 		Launcher.Network.TriggerMorph()
 	elif TryJustPressed(event, "ui_close"):			Launcher.GUI.CloseWindow()

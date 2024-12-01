@@ -1,4 +1,4 @@
-extends Node
+extends Object
 
 #
 func WarpPlayer(map : String, _rpcID : int = NetworkCommons.RidSingleMode):
@@ -155,14 +155,37 @@ func PushNotification(notif : String, _rpcID : int = NetworkCommons.RidSingleMod
 	if Launcher.GUI:
 		Launcher.GUI.notificationLabel.AddNotification(notif)
 
-func DisconnectPlayer():
-	Launcher.LauncherReset()
-
-func NetworkIssue():
+#
+func AuthError(err : NetworkCommons.AuthError, _rpcID : int = NetworkCommons.RidSingleMode):
 	if Launcher.GUI:
-		Launcher.GUI.loginWindow.FillWarningLabel("Could not connect to the server.\nPlease contact us via our [url=%s][color=#%s]Discord server[/color][/url].\nMeanwhile be sure to test the offline mode!" % [LauncherCommons.SocialLink, UICommons.DarkTextColor])
+		Launcher.GUI.loginWindow.FillWarningLabel(err)
+	Launcher.FSM.EnterState(Launcher.FSM.States.CHAR_SCREEN if err == NetworkCommons.AuthError.ERR_OK else Launcher.FSM.States.LOGIN_SCREEN)
+
+func CharacterError(err : NetworkCommons.AuthError, _rpcID : int = NetworkCommons.RidSingleMode):
+	if Launcher.GUI:
+		Launcher.GUI.characterPanel.FillWarningLabel(err)
+
+func CharacterList(chars : Array[Dictionary], _rpcID : int = NetworkCommons.RidSingleMode):
+	for characterInfo in chars:
+		CharacterInfo(characterInfo)
+
+func CharacterInfo(info : Dictionary, _rpcID : int = NetworkCommons.RidSingleMode):
+	Launcher.GUI.characterPanel.AddCharacter(info)
+
+#
+func ConnectServer():
+	if Launcher.GUI and Launcher.GUI.loginWindow:
+		Launcher.FSM.EnterState(Launcher.FSM.States.LOGIN_PROGRESS)
+
+		var accountName : String = Launcher.GUI.loginWindow.nameText
+		var accountPassword : String = Launcher.GUI.loginWindow.passwordText
+		Launcher.Network.ConnectAccount(accountName, accountPassword)
+
+func DisconnectServer():
+	Launcher.LauncherReset()
 	Launcher.FSM.EnterState(Launcher.FSM.States.LOGIN_SCREEN)
 
+#
 func _init():
 	if not Launcher.FSM.exit_login.is_connected(Launcher.Network.NetCreate):
 		Launcher.FSM.exit_login.connect(Launcher.Network.NetCreate)
