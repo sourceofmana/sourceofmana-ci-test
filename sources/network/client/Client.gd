@@ -84,7 +84,7 @@ func Morphed(ridAgent : int, morphID : String, morphed : bool, _rpcID : int = Ne
 			entity.stat.Morph(morphData)
 			entity.SetVisual(morphData, morphed)
 
-func UpdateActiveStats(ridAgent : int, level : int, experience : int, gp : int, health : int, mana : int, stamina : int, weight : float, entityShape : String, spiritShape : String, currentShape : String, _rpcID : int = NetworkCommons.RidSingleMode):
+func UpdateActiveStats(ridAgent : int, level : int, experience : int, gp : int, health : int, mana : int, stamina : int, weight : float, shape : String, spirit : String, currentShape : String, _rpcID : int = NetworkCommons.RidSingleMode):
 	if Launcher.Map:
 		var entity : Entity = Entities.Get(ridAgent)
 		if entity and entity.get_parent() and entity.stat:
@@ -96,8 +96,8 @@ func UpdateActiveStats(ridAgent : int, level : int, experience : int, gp : int, 
 			entity.stat.mana			= mana
 			entity.stat.stamina			= stamina
 			entity.stat.weight			= weight
-			entity.stat.entityShape		= entityShape
-			entity.stat.spiritShape		= spiritShape
+			entity.stat.shape		= shape
+			entity.stat.spirit		= spirit
 			entity.stat.currentShape	= currentShape
 			if levelUp:
 				if entity == Launcher.Player:
@@ -158,36 +158,38 @@ func PushNotification(notif : String, _rpcID : int = NetworkCommons.RidSingleMod
 #
 func AuthError(err : NetworkCommons.AuthError, _rpcID : int = NetworkCommons.RidSingleMode):
 	if Launcher.GUI:
-		Launcher.GUI.loginWindow.FillWarningLabel(err)
-	Launcher.FSM.EnterState(Launcher.FSM.States.CHAR_SCREEN if err == NetworkCommons.AuthError.ERR_OK else Launcher.FSM.States.LOGIN_SCREEN)
+		Launcher.GUI.loginPanel.FillWarningLabel(err)
 
 func CharacterError(err : NetworkCommons.AuthError, _rpcID : int = NetworkCommons.RidSingleMode):
 	if Launcher.GUI:
 		Launcher.GUI.characterPanel.FillWarningLabel(err)
-
-func CharacterList(chars : Array[Dictionary], _rpcID : int = NetworkCommons.RidSingleMode):
-	for characterInfo in chars:
-		CharacterInfo(characterInfo)
 
 func CharacterInfo(info : Dictionary, _rpcID : int = NetworkCommons.RidSingleMode):
 	Launcher.GUI.characterPanel.AddCharacter(info)
 
 #
 func ConnectServer():
-	if Launcher.GUI and Launcher.GUI.loginWindow:
-		Launcher.FSM.EnterState(Launcher.FSM.States.LOGIN_PROGRESS)
-
-		var accountName : String = Launcher.GUI.loginWindow.nameText
-		var accountPassword : String = Launcher.GUI.loginWindow.passwordText
-		Launcher.Network.ConnectAccount(accountName, accountPassword)
+	if Launcher.GUI and Launcher.GUI.loginPanel:
+		Launcher.GUI.loginPanel.EnableButtons.call_deferred(true)
 
 func DisconnectServer():
-	Launcher.LauncherReset()
-	Launcher.FSM.EnterState(Launcher.FSM.States.LOGIN_SCREEN)
+	Launcher.Mode(true, true)
+	FSM.EnterState(FSM.States.LOGIN_SCREEN)
+	AuthError(NetworkCommons.AuthError.ERR_SERVER_UNREACHABLE)
 
 #
-func _init():
-	if not Launcher.FSM.exit_login.is_connected(Launcher.Network.NetCreate):
-		Launcher.FSM.exit_login.connect(Launcher.Network.NetCreate)
-	if not Launcher.FSM.enter_login.is_connected(Launcher.Network.NetDestroy):
-		Launcher.FSM.enter_login.connect(Launcher.Network.NetDestroy)
+func Init():
+	if not Launcher.Root.multiplayer.connected_to_server.is_connected(ConnectServer):
+		Launcher.Root.multiplayer.connected_to_server.connect(ConnectServer)
+	if not Launcher.Root.multiplayer.connection_failed.is_connected(DisconnectServer):
+		Launcher.Root.multiplayer.connection_failed.connect(DisconnectServer)
+	if not Launcher.Root.multiplayer.server_disconnected.is_connected(DisconnectServer):
+		Launcher.Root.multiplayer.server_disconnected.connect(DisconnectServer)
+
+func Destroy():
+	if Launcher.Root.multiplayer.connected_to_server.is_connected(ConnectServer):
+		Launcher.Root.multiplayer.connected_to_server.disconnect(ConnectServer)
+	if Launcher.Root.multiplayer.connection_failed.is_connected(DisconnectServer):
+		Launcher.Root.multiplayer.connection_failed.disconnect(DisconnectServer)
+	if Launcher.Root.multiplayer.server_disconnected.is_connected(DisconnectServer):
+		Launcher.Root.multiplayer.server_disconnected.disconnect(DisconnectServer)

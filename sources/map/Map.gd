@@ -84,9 +84,9 @@ func AddEntity(agentID : int, entityType : ActorCommons.Type, entityID : String,
 	var isLocalPlayer : bool = entityType == ActorCommons.Type.PLAYER and nick == Launcher.GUI.characterPanel.characterNameDisplay.get_text()
 	var isAlreadySpawned : bool = entity != null and entity.get_parent() == fringeLayer
 
-	if isLocalPlayer and Launcher.Player:
-		entity = Launcher.Player
 	if not entity:
+		if nick.is_empty():
+			nick = entityID
 		entity = Instantiate.CreateEntity(entityType, entityID, nick, isLocalPlayer)
 		entity.agentID = agentID
 		if isLocalPlayer:
@@ -144,4 +144,12 @@ func PickupNearestDrop():
 				nearestLengthSquared = lengthSquared
 				nearestID = dropID
 	if nearestID > 0:
-		Launcher.Network.PickupDrop(nearestID)
+		Network.PickupDrop(nearestID)
+
+#
+func _post_launch():
+	isInitialized = true
+
+func Destroy():
+	UnloadMapNode()
+	Entities.Clear()

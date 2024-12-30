@@ -57,13 +57,13 @@ func SetLocalPlayer():
 			Launcher.Camera.mainCamera.ready.connect(Launcher.Camera.mainCamera.make_current)
 
 	entity_died.connect(Launcher.GUI.respawnWindow.EnableControl.bind(true))
-	Launcher.Network.RetrieveInventory()
-	Launcher.FSM.EnterState(Launcher.FSM.States.IN_GAME)
+	Network.RetrieveInventory()
+	FSM.EnterState(FSM.States.IN_GAME)
 
 func ClearTarget():
 	if target != null:
-		if target.interactive.nameLabel.material:
-			target.interactive.nameLabel.material = null
+		if target.interactive:
+			target.interactive.DisplayTarget(ActorCommons.Target.NONE)
 		if target.is_inside_tree():
 			Callback.SelfDestructTimer(target.interactive.healthBar, ActorCommons.DisplayHPDelay, target.interactive.HideHP, [], "HideHP")
 		else:
@@ -78,10 +78,10 @@ func Target(source : Vector2, interactable : bool = true, nextTarget : bool = fa
 
 	if target:
 		if interactable and target.type == ActorCommons.Type.NPC:
-			target.interactive.nameLabel.material = ActorCommons.AllyTarget
+			target.interactive.DisplayTarget(ActorCommons.Target.ALLY)
 		elif target.type == ActorCommons.Type.MONSTER:
-			target.interactive.nameLabel.material = ActorCommons.EnemyTarget
-			Launcher.Network.TriggerSelect(target.agentID)
+			target.interactive.DisplayTarget(ActorCommons.Target.ENEMY)
+			Network.TriggerSelect(target.agentID)
 
 func JustInteract():
 	if not target or target.state == ActorCommons.State.DEATH:
@@ -95,7 +95,7 @@ func JustInteract():
 func Interact():
 	if target != null:
 		if target.type == ActorCommons.Type.NPC:
-			Launcher.Network.TriggerInteract(target.agentID)
+			Network.TriggerInteract(target.agentID)
 		elif target.type == ActorCommons.Type.MONSTER:
 			Cast(DB.GetCellHash(SkillCommons.SkillMeleeName))
 
@@ -119,7 +119,7 @@ func Cast(skillID : int):
 		if target and target.type == ActorCommons.Type.MONSTER:
 			entityID = target.agentID
 
-	Launcher.Network.TriggerCast(entityID, skillID)
+	Network.TriggerCast(entityID, skillID)
 
 #
 func _physics_process(delta : float):
@@ -140,4 +140,5 @@ func _ready():
 		Launcher.Map.MapUnloaded.connect(ClearTarget)
 	else:
 		stat.active_stats_updated.connect(interactive.DisplayHP)
-	entity_died.connect(interactive.DisplayHP)
+	entity_died.connect(interactive.HideHP)
+	entity_died.connect(interactive.DisplayTarget.bind(ActorCommons.Target.NONE))

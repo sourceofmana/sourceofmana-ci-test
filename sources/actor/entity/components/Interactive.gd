@@ -11,8 +11,47 @@ class_name EntityInteractive
 @onready var entity : Entity				= get_parent()
 
 var displayName : bool						= false
+var selectionFx : GPUParticles2D			= null
+var visualOffset : int						= -1
 
 #
+func DisplaySelection(hue : float, alpha : float = 1.0):
+	if selectionFx == null:
+		selectionFx = ActorCommons.SelectionFx.instantiate()
+		selectionFx.finished.connect(remove_child.bind(selectionFx))
+		add_child(selectionFx)
+
+		if selectionFx:
+			var sizeRatio : float = float(visualOffset) / float(ActorCommons.interactionDisplayOffset) if ActorCommons.interactionDisplayOffset > 0 else 1.0
+			var emissionShapeScale : Vector3 = selectionFx.process_material.get("emission_shape_scale")
+			if emissionShapeScale != Vector3.ZERO:
+				emissionShapeScale *= sizeRatio
+				selectionFx.process_material.set("emission_shape_scale", emissionShapeScale)
+			selectionFx.amount_ratio = sizeRatio
+
+	if selectionFx:
+		var colorRamp : GradientTexture1D = selectionFx.process_material.get("color_ramp")
+		if colorRamp and colorRamp.gradient.colors.size() > 1:
+			colorRamp.gradient.colors[1].h = hue
+			colorRamp.gradient.colors[1].a = alpha
+			selectionFx.process_material.set("color_ramp", colorRamp)
+
+func DisplayTarget(type : ActorCommons.Target):
+	match type:
+		ActorCommons.Target.NONE:
+			if selectionFx and selectionFx.emitting:
+				DisplaySelection(0.0, 0.0)
+				selectionFx.emitting = false
+				selectionFx = null
+			if nameLabel and nameLabel.material:
+				nameLabel.material = null
+		ActorCommons.Target.ALLY:
+			nameLabel.material = ActorCommons.AllyTarget
+			DisplaySelection(0.53)
+		ActorCommons.Target.ENEMY:
+			nameLabel.material = ActorCommons.EnemyTarget
+			DisplaySelection(0.03)
+
 func DisplayEmote(emoteID : int):
 	assert(emoteFx != null, "No emote particle found, could not display emote")
 	if emoteFx:
@@ -140,13 +179,14 @@ func HideHP():
 
 func DisplaySailContext():
 	Launcher.GUI.choiceContext.Clear()
-	Launcher.GUI.choiceContext.Push(ContextData.new("ui_context_validate", "Explore", Launcher.Network.TriggerExplore.bind()))
+	Launcher.GUI.choiceContext.Push(ContextData.new("ui_context_validate", "Explore", Network.TriggerExplore.bind()))
 	Launcher.GUI.choiceContext.Push(ContextData.new("ui_context_cancel", "Cancel", Callback.Empty.bind()))
 	Launcher.GUI.choiceContext.FadeIn(true)
 
 #
 func RefreshVisibleNodeOffset(offset : int):
-	visibleNode.position.y = (-ActorCommons.interactionDisplayOffset) + offset
+	visibleNode.position.y = offset - ActorCommons.interactionDisplayOffset
+	visualOffset = clamp(-offset, 20, 256)
 
 #
 func _physics_process(delta):
@@ -163,12 +203,5 @@ func Init(data : EntityData):
 	if nameLabel:
 		nameLabel.set_text(entity.nick)
 		nameLabel.set_visible(displayName)
-
-func _ready():
-	assert(entity != null, "No Entity is found as parent for this Interactive node")
-	if not entity:
-		return
-
-	if visibleNode and entity.visual:
-		entity.visual.spriteOffsetUpdate.connect(RefreshVisibleNodeOffset)
-		entity.visual.SyncPlayerOffset()
+	if entity.visual:
+		RefreshVisibleNodeOffset(entity.visual.GetPlayerOffset())

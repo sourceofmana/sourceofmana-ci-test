@@ -1,4 +1,4 @@
-extends ServiceBase
+extends Node
 
 #
 signal enter_login
@@ -28,6 +28,15 @@ func GetPhase() -> Phases:
 	elif currentState != nextState:
 		return Phases.EXIT
 	return Phases.UPDATE
+
+func IsLoginState() -> bool:
+	return currentState == States.LOGIN_SCREEN or currentState == States.LOGIN_PROGRESS
+
+func IsCharacterState() -> bool:
+	return currentState == States.CHAR_SCREEN or currentState == States.CHAR_PROGRESS
+
+func IsGameState() -> bool:
+	return currentState == States.IN_GAME
 
 func EnterState(state : States):
 	Util.PrintLog("Launcher", "Entering new FSM state: %s" % str(States.keys()[state]))
@@ -75,7 +84,3 @@ func UpdateStates():
 	currentState	= nextState
 	if lastState != currentState or currentState != nextState:
 		UpdateStates.call_deferred()
-
-#
-func _post_launch():
-	isInitialized = true

@@ -136,19 +136,8 @@ func set_actionoverlay(enable : bool):
 	SetVal("Render-ActionOverlay", enable)
 	apply_actionoverlay(enable)
 func apply_actionoverlay(enable : bool):
-	if Launcher.GUI:
-		if enable:
-			var rescaledWindowSize : float = float(DisplayServer.window_get_size().x / Launcher.Root.get_content_scale_factor())
-			var horizontalMargin : int = lerp(0, 160, max(0, rescaledWindowSize - GetVal("Render-MinWindowSize").x * 1.5) / rescaledWindowSize)
-			Launcher.GUI.shortcuts.add_theme_constant_override("margin_left", horizontalMargin)
-			Launcher.GUI.shortcuts.add_theme_constant_override("margin_right", horizontalMargin)
-			Launcher.GUI.sticks.set_visible(true)
-			Launcher.Action.supportMouse = false
-		else:
-			Launcher.GUI.shortcuts.add_theme_constant_override("margin_left", 0)
-			Launcher.GUI.shortcuts.add_theme_constant_override("margin_right", 0)
-			Launcher.GUI.sticks.set_visible(false)
-			Launcher.Action.supportMouse = true
+	if Launcher.GUI and Launcher.GUI.sticks:
+		Launcher.GUI.sticks.Enable(enable)
 
 # Lighting
 func init_lighting(apply : bool):
@@ -172,7 +161,8 @@ func set_hq4x(enable : bool):
 	SetVal("Render-HQ4x", enable)
 	apply_hq4x(enable)
 func apply_hq4x(enable : bool):
-	Launcher.GUI.HQ4xShader.set_visible(enable)
+	if Launcher.GUI and Launcher.GUI.HQ4xShader:
+		Launcher.GUI.HQ4xShader.set_visible(enable)
 
 # CRT
 func init_crt(apply : bool):
@@ -184,7 +174,8 @@ func set_crt(enable : bool):
 	SetVal("Render-CRT", enable)
 	apply_crt(enable)
 func apply_crt(enable : bool):
-	Launcher.GUI.CRTShader.set_visible(enable)
+	if Launcher.GUI and Launcher.GUI.CRTShader:
+		Launcher.GUI.CRTShader.set_visible(enable)
 
 # Audio General
 func init_audiogeneral(apply : bool):
@@ -209,8 +200,8 @@ func set_sessionaccountname(accountName : String):
 	SetVal("Session-AccountName", accountName)
 	apply_sessionaccountname(accountName)
 func apply_sessionaccountname(accountName : String):
-	if Launcher.GUI and Launcher.GUI.loginWindow:
-		Launcher.GUI.loginWindow.nameTextControl.set_text(accountName)
+	if Launcher.GUI and Launcher.GUI.loginPanel:
+		Launcher.GUI.loginPanel.nameTextControl.set_text(accountName)
 
 # Session Windows Overlay placement
 enum ESessionOverlay { NAME = 0, POSITION, SIZE, COUNT}
@@ -283,12 +274,12 @@ func _on_visibility_changed():
 	RefreshSettings(false)
 
 func _ready():
-	if not Launcher.FSM:
+	if not FSM:
 		return
 
 	RefreshSettings(true)
-	Launcher.FSM.enter_game.connect(RefreshSettings.bind(true))
-	Launcher.FSM.exit_game.connect(SaveSettings.bind())
+	FSM.enter_game.connect(RefreshSettings.bind(true))
+	FSM.exit_game.connect(SaveSettings.bind())
 
 	if LauncherCommons.isMobile or OS.get_name() == "Web":
 		accessors[CATEGORY.RENDER]["Render-WindowSize"][ACC_TYPE.LABEL].get_parent().set_visible(false)

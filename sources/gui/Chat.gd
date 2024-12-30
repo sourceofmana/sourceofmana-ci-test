@@ -4,8 +4,8 @@ class_name ChatContainer
 @onready var tabContainer : TabContainer		= $ChatTabContainer
 @onready var lineEdit : LineEdit				= $NewText
 
-@onready var tabInstance : Object				= FileSystem.LoadGui("chat/ChatTab", false)
-@onready var backlog : ChatBacklog			= ChatBacklog.new()
+@onready var tabInstance : Object				= FileSystem.LoadGui("labels/ChatLabel", false)
+@onready var backlog : ChatBacklog				= ChatBacklog.new()
 
 var enabledLastFrame : bool						= false
 
@@ -39,14 +39,14 @@ func OnNewTextSubmitted(newText : String):
 			lineEdit.clear()
 			if Launcher.Player:
 				backlog.Add(newText)
-				Launcher.Network.TriggerChat(newText)
+				Network.TriggerChat(newText)
 				SetNewLineEnabled(false)
 		else:
 			SetNewLineEnabled(false)
 
 #
 func _input(event : InputEvent):
-	if isNewLineEnabled():
+	if FSM.IsGameState() and isNewLineEnabled():
 		if Launcher.Action.TryJustPressed(event, "ui_cancel", true):
 			SetNewLineEnabled(false)
 		elif Launcher.Action.TryJustPressed(event, "ui_up", true):

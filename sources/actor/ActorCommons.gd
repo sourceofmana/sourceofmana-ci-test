@@ -55,6 +55,13 @@ enum Attribute
 	CONCENTRATION,
 }
 
+enum Target
+{
+	NONE = 0,
+	ALLY,
+	ENEMY
+}
+
 const playbackParameter : String = "parameters/playback"
 
 # Skip TO_TRIGGER & FROM_TRIGGER as they are only used as transition steps between idle/trigger.
@@ -154,9 +161,11 @@ const AlterationLabel : PackedScene			= preload("res://presets/gui/AlterationLab
 const SpeechLabel : PackedScene				= preload("res://presets/gui/chat/SpeechBubble.tscn")
 const MorphFx : PackedScene					= preload("res://presets/effects/particles/Morph.tscn")
 const LevelUpFx : PackedScene				= preload("res://presets/effects/particles/LevelUp.tscn")
-const GenderMaleTexture						= preload("res://data/graphics/gui/stat/gender-male.png")
-const GenderFemaleTexture					= preload("res://data/graphics/gui/stat/gender-female.png")
-const GenderNonBinaryTexture				= preload("res://data/graphics/gui/stat/gender-nonbinary.png")
+const SelectionFx : PackedScene				= preload("res://presets/effects/particles/Selection.tscn")
+
+const GenderMaleTexture : Texture2D			= preload("res://data/graphics/gui/stat/gender-male.png")
+const GenderFemaleTexture : Texture2D		= preload("res://data/graphics/gui/stat/gender-female.png")
+const GenderNonBinaryTexture : Texture2D	= preload("res://data/graphics/gui/stat/gender-nonbinary.png")
 
 # Skill
 enum Alteration
@@ -214,10 +223,31 @@ const MaxDisplacementSquareLength : float	= 64 * 64
 const InputApproximationUnit : int			= 12
 const MaxEntityRadiusSize : int				= 256
 
+# Character
+const InvalidCharacterSlot : int			= -1
+const MaxCharacterCount : int				= 10
+const CharacterScreenMap : String			= "Drazil"
+const CharacterScreenLocations : PackedVector2Array = [
+	Vector2(1984, 992),
+	Vector2(2144, 960),
+	Vector2(2240, 896),
+	Vector2(2240, 768),
+	Vector2(2144, 704),
+	Vector2(2048, 736),
+	Vector2(1856, 672),
+	Vector2(1728, 768),
+	Vector2(1760, 896),
+	Vector2(1856, 960),
+	Vector2(2048, 928)
+]
+
 # New player
 const DefaultAttributes : Dictionary = {
 	"strength": 10,
-	"vitality": 3
+	"vitality": 3,
+	"agility": 0,
+	"endurance": 0,
+	"concentration": 0,
 }
 static var DefaultInventory : Dictionary = {
 	"Apple".hash(): 5

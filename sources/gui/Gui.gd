@@ -14,6 +14,7 @@ extends ServiceBase
 @onready var dialogueContainer : PanelContainer	= $Overlay/VSections/Contexts/Dialogue/BottomVbox/Dialogue
 @onready var choiceContext : ContextMenu		= $Overlay/VSections/Contexts/Dialogue/BottomVbox/ChoiceVbox/Choice
 @onready var infoContext : ContextMenu			= $Overlay/VSections/Contexts/Info
+@onready var loginPanel : Control				= $Overlay/VSections/Contexts/Login
 @onready var characterPanel : Control			= $Overlay/VSections/Contexts/Character
 
 # Shortcuts
@@ -24,8 +25,6 @@ extends ServiceBase
 
 # Windows
 @onready var windows : Control					= $Windows/Floating
-@onready var newsWindow : WindowPanel			= $Windows/Floating/News
-@onready var loginWindow : WindowPanel			= $Windows/Floating/Login
 @onready var inventoryWindow : WindowPanel		= $Windows/Floating/Inventory
 @onready var minimapWindow : WindowPanel		= $Windows/Floating/Minimap
 @onready var chatWindow : WindowPanel			= $Windows/Floating/Chat
@@ -48,17 +47,26 @@ var progressTimer : Timer						= null
 
 #
 func CloseWindow():
-	ToggleControl(quitWindow)
+	if FSM.IsLoginState():
+		ToggleControl(quitWindow)
+	elif FSM.IsCharacterState():
+		characterPanel.Close()
+	elif FSM.IsGameState():
+		ToggleControl(quitWindow)
 
 func GetCurrentWindow() -> Control:
 	if windows && windows.get_child_count() > 0:
 		return windows.get_child(windows.get_child_count() - 1)
 	return null
 
-func CloseCurrentWindow():
-	var control : WindowPanel = GetCurrentWindow()
-	if control and control.is_visible():
-		ToggleControl(control)
+func CloseCurrent():
+	var focusedNode : Control = get_viewport().gui_get_focus_owner()
+	if focusedNode and focusedNode is LineEdit:
+		focusedNode.release_focus()
+	else:
+		var control : WindowPanel = GetCurrentWindow()
+		if control and control.is_visible():
+			ToggleControl(control)
 
 func ToggleControl(control : WindowPanel):
 	if control:
@@ -79,7 +87,7 @@ func DisplayInfoContext(actions : PackedStringArray):
 
 #
 func EnterLoginMenu():
-	if progressTimer:
+	if progressTimer != null:
 		progressTimer.stop()
 		progressTimer = null
 
@@ -88,7 +96,6 @@ func EnterLoginMenu():
 	stats.set_visible(false)
 	statWindow.set_visible(false)
 	dialogueContainer.set_visible(false)
-	notificationLabel.set_visible(false)
 	pickupPanel.set_visible(false)
 	loadingControl.set_visible(false)
 	menu.set_visible(false)
@@ -100,26 +107,30 @@ func EnterLoginMenu():
 	buttonBoxes.set_visible(false)
 
 	background.set_visible(true)
-	newsWindow.EnableControl(true)
-	loginWindow.EnableControl(true)
+	loginPanel.set_visible(true)
+	loginPanel.RefreshOnce()
+	buttonBoxes.set_visible(true)
 
 func EnterLoginProgress():
-	newsWindow.EnableControl(false)
-	loginWindow.EnableControl(false)
+	loginPanel.set_visible(false)
+	buttonBoxes.set_visible(false)
 
-	progressTimer = Callback.SelfDestructTimer(self, NetworkCommons.LoginAttemptTimeout, Launcher.Network.Client.AuthError, [NetworkCommons.AuthError.ERR_TIMEOUT], "ProgressTimer")
+	progressTimer = Callback.SelfDestructTimer(self, NetworkCommons.LoginAttemptTimeout, TimeoutLoginProgress, [], "ProgressTimer")
 	loadingControl.set_visible(true)
+
+func TimeoutLoginProgress():
+	Network.Client.AuthError(NetworkCommons.AuthError.ERR_TIMEOUT)
+	progressTimer = null
 
 func EnterCharMenu():
 	if progressTimer:
 		progressTimer.stop()
 		progressTimer = null
+
 	loadingControl.set_visible(false)
 	background.set_visible(false)
-	Launcher.Map.EmplaceMapNode("Drazil")
-	Launcher.Camera.SetBoundaries()
-	Launcher.Camera.EnableSceneCamera(Vector2(1984, 992))
-	characterPanel.EnableCharacterCreator(false)
+	loginPanel.set_visible(false)
+	characterPanel.RefreshOnce()
 
 	characterPanel.set_visible(true)
 	buttonBoxes.set_visible(true)
@@ -128,14 +139,19 @@ func EnterCharProgress():
 	characterPanel.set_visible(false)
 	buttonBoxes.set_visible(false)
 
-	progressTimer = Callback.SelfDestructTimer(self, NetworkCommons.CharSelectionTimeout, Launcher.Network.Client.CharacterError, [NetworkCommons.CharacterError.ERR_TIMEOUT], "ProgressTimer")
+	progressTimer = Callback.SelfDestructTimer(self, NetworkCommons.CharSelectionTimeout, TimeoutCharProgress, [], "ProgressTimer")
 	loadingControl.set_visible(true)
+
+func TimeoutCharProgress():
+	Network.Client.CharacterError(NetworkCommons.CharacterError.ERR_TIMEOUT)
+	progressTimer = null
 
 func EnterGame():
 	if progressTimer:
 		progressTimer.stop()
 		progressTimer = null
 	loadingControl.set_visible(false)
+	background.set_visible(false)
 
 	Launcher.Camera.DisableSceneCamera()
 	DisplayInfoContext(["gp_interact", "gp_untarget", "gp_morph", "gp_sit", "gp_target", "gp_pickup"])
@@ -143,7 +159,6 @@ func EnterGame():
 	stats.set_visible(true)
 	menu.set_visible(true)
 	actionBoxes.set_visible(true)
-	notificationLabel.set_visible(true)
 	shortcuts.set_visible(true)
 
 	menu.SetItemsVisible(true)
@@ -152,17 +167,13 @@ func EnterGame():
 
 #
 func _post_launch():
-	get_tree().set_auto_accept_quit(false)
-	get_tree().set_quit_on_go_back(false)
+	FSM.enter_login.connect(EnterLoginMenu)
+	FSM.enter_login_progress.connect(EnterLoginProgress)
+	FSM.enter_char.connect(EnterCharMenu)
+	FSM.enter_char_progress.connect(EnterCharProgress)
+	FSM.enter_game.connect(EnterGame)
+	FSM.EnterState(FSM.States.LOGIN_SCREEN)
 
-	if Launcher.FSM:
-		Launcher.FSM.enter_login.connect(EnterLoginMenu)
-		Launcher.FSM.enter_login_progress.connect(EnterLoginProgress)
-		Launcher.FSM.enter_char.connect(EnterCharMenu)
-		Launcher.FSM.enter_char_progress.connect(EnterCharProgress)
-		Launcher.FSM.enter_game.connect(EnterGame)
-
-	Launcher.FSM.EnterState(Launcher.FSM.States.LOGIN_SCREEN)
 	isInitialized = true
 
 func _notification(notif):
@@ -178,6 +189,9 @@ func _notification(notif):
 			Launcher.Action.Enable(true)
 
 func _ready():
+	get_tree().set_auto_accept_quit(false)
+	get_tree().set_quit_on_go_back(false)
+
 	assert(CRTShader.material != null, "CRT Shader can't load as its texture material is missing")
 	CRTShader.material.set_shader_parameter("resolution", get_viewport().size / 2)
 
